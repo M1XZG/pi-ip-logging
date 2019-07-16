@@ -1,0 +1,8 @@
+# This should be placed in:   /etc/cron.d/
+
+# Run at reboot
+@reboot root /root/log-my-ip.sh REBOOT
+# Run at a set time each day
+0 0 * * * root /root/log-my-ip.sh SCHEDULED
+
+#
