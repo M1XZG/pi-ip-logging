@@ -64,6 +64,8 @@ TGURL="https://api.telegram.org/bot${TGTOKEN}/sendMessage"		# This shouldn't rea
 _MYSERVER=""													# This is the FQDN (leave blank to disable this function)
 GCURL="http://${_MYSERVER}/<PATH TO YOUR PHP SCRIPT>"
 
+WGETOPTS=" -q --no-check-certificate -O /dev/null"
+
 # Shouldn't need to touch these
 hostname="$(hostname)"
 intip="$(hostname -I|awk '{print $1}')"
@@ -108,7 +110,7 @@ send_message_to_server()
 		ping -c 5 ${_MYSERVER} &> /dev/null
 		PING=$?
 	done
-	wget -q ${GCURL} --post-data="hostname=${hostname}&intip=${intip}&extip=${extip}&mydate=${mydate}&note=${note}" -O /dev/null
+	wget ${WGETOPTS} ${GCURL} --post-data="hostname=${hostname}&intip=${intip}&extip=${extip}&mydate=${mydate}&note=${note}"
 	if [ "${note}" = "REBOOT" ];then
 		send_message
 	fi
