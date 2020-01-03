@@ -54,21 +54,41 @@ DEP="dnsutils"
 # Configure all your variables here for the script.
 ########################################################################################################
 
-# Telegram (TG) settings.. Token is your private bot key when it was created.  Don't give this out
-TGTOKEN=""														# This is your super secret bot token, keep it private (leave blank to disable telegram function)
-TGCHATID="TELEGRAM CHAT ID"										# Send only as the user in a private message
-TGGRPID="TELEGRAM GROUP ID"										# Send to private group "Messages From My Bots"
+# If you want to keep the 5 variables below in a config file that you can manage by script, ansible, etc
+if [ -f /usr/local/etc/log-my-ip.ini ]; then
+	source /usr/local/etc/log-my-ip.ini
+else
+	# Telegram (TG) settings.. Token is your private bot key when it was created.  Don't give this out
+	TGTOKEN="TELEGRAM TOKEN"				# This is your super secret bot token, keep it private
+	TGCHATID="TELEGRAM CHAT ID"				# Send only as the user in a private message
+	TGGRPID="TELEGRAM GROUP ID"				# Send to private group "Messages From My Bots"
+
+	# Link to my server that you collect the data
+	_MYSERVER="server.acme.com"				# This is the FQDN (leave blank to disable this function)
+	# Path on the webserver to the php script
+	_SECRETPATH="1234abcdQWERTY"				# This is added to the URL if you want to obfiscate the URL
+fi
+
 TGURL="https://api.telegram.org/bot${TGTOKEN}/sendMessage"		# This shouldn't really change
 
 # Link to my server that you collect the data
-_MYSERVER=""													# This is the FQDN (leave blank to disable this function)
 GCURL="http://${_MYSERVER}/<PATH TO YOUR PHP SCRIPT>"
 
 WGETOPTS=" -q --no-check-certificate -O /dev/null"
 
 # Shouldn't need to touch these
 hostname="$(hostname)"
-intip="$(hostname -I|awk '{print $1}')"
+
+intip=""
+intipres="$(echo ${intip} | grep -q 174 || echo $?)"
+
+while [ "$intipres" = "1" ]
+do
+	intip="$(hostname -I|awk '{print $1}')"
+	intipres="$(echo ${intip} | grep -q 174 || echo $?)"
+	sleep 5
+done
+
 mydate="$(date)"
 
 ########################################################################################################
@@ -93,7 +113,7 @@ send_message_to_telegram()
 {
     tmpfile=$(mktemp /tmp/telebot.XXXXXXX)
     cat > $tmpfile <<EOF
-{"chat_id":"$TGGRPID", "parse_mode":"markdown", "text":"*System Reboot Update*\n*Date*: ${mydate}\n*Hostname*: $hostname\n*Internal IP*: $intip\n*External IP*: $extip"}
+{"chat_id":"$TGGRPID", "parse_mode":"markdown", "text":"*System Update*: $note\n*Date*: ${mydate}\n*Hostname*: $hostname\n*Internal IP*: $intip\n*External IP*: $extip"}
 EOF
     curl -k --header 'Content-Type: application/json' \
         --data-binary @${tmpfile} \
@@ -139,7 +159,7 @@ else
 	done
 
 	if [ "$1" = "" ]; then
-		note="Manual"
+		note="Manual Update"
 	else
 		note="$1"
 	fi
