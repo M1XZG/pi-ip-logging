@@ -67,6 +67,12 @@ else
 	_MYSERVER="server.acme.com"				# This is the FQDN (leave blank to disable this function)
 	# Path on the webserver to the php script
 	_SECRETPATH="1234abcdQWERTY"				# This is added to the URL if you want to obfiscate the URL
+
+	# My network range - This is used when searching to make sure we have an IP assigned, it might change later
+	# to another method but for now it's what I'm using.  So enter something we can search for like:  172.16.29
+	# or 192.168.0, etc
+	_my_network_range="172.16.29"
+
 fi
 
 TGURL="https://api.telegram.org/bot${TGTOKEN}/sendMessage"		# This shouldn't really change
@@ -80,12 +86,12 @@ WGETOPTS=" -q --no-check-certificate -O /dev/null"
 hostname="$(hostname)"
 
 intip=""
-intipres="$(echo ${intip} | grep -q 174 || echo $?)"
+intipres="$(echo ${intip} | grep -q ${_my_network_range} || echo $?)"
 
 while [ "$intipres" = "1" ]
 do
 	intip="$(hostname -I|awk '{print $1}')"
-	intipres="$(echo ${intip} | grep -q 174 || echo $?)"
+	intipres="$(echo ${intip} | grep -q ${_my_network_range} || echo $?)"
 	sleep 5
 done
 
