@@ -1,8 +1,7 @@
-# This should be placed in:   /etc/cron.d/
+# This file should be should be placed in:   /etc/cron.d/
+# Rename to remove the .CRONTAB (but it's not required, it'll work fine with the current name)
 
 # Run at reboot
 @reboot root /root/log-my-ip.sh REBOOT
 # Run at a set time each day
 0 0 * * * root /root/log-my-ip.sh SCHEDULED
-
-#
