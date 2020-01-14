@@ -71,7 +71,7 @@ else
 	# My network range - This is used when searching to make sure we have an IP assigned, it might change later
 	# to another method but for now it's what I'm using.  So enter something we can search for like:  172.16.29
 	# or 192.168.0, etc
-	_my_network_range="172.16.29"
+	_my_network_range="192.168.0"
 
 fi
 
