@@ -144,6 +144,8 @@ send_message_to_server()
 
 self_update() 
 {
+	# Taken from https://stackoverflow.com/questions/59727780/self-updating-bash-script-from-github
+	
     [ "$UPDATE_GUARD" ] && return
     export UPDATE_GUARD=YES
 
