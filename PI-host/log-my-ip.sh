@@ -145,7 +145,7 @@ send_message_to_server()
 self_update() 
 {
 	# Taken from https://stackoverflow.com/questions/59727780/self-updating-bash-script-from-github
-	
+
     [ "$UPDATE_GUARD" ] && return
     export UPDATE_GUARD=YES
 
@@ -179,6 +179,9 @@ self_update()
 # Lets make sure we have some tools we need.  If not then the script will try to install dnsutils, if it 
 # fails then exit.
 check_for_deps
+
+# Look for updates to the script
+self_update
 
 # Waiting for network .. this is needed to make sure the pi has network before we actually run through
 # the rest of the script.  This will loop forever until network is found.  Shouldn't cause any issues
