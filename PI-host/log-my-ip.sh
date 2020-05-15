@@ -60,6 +60,10 @@ DEP="dnsutils"
 if [ -f /usr/local/etc/log-my-ip.ini ]; then
 	source /usr/local/etc/log-my-ip.ini
 else
+
+	# If you want to use the self updating function, change the from NO to YES
+	USE_SELFUPATE=NO
+
 	# Telegram (TG) settings.. Token is your private bot key when it was created.  Don't give this out
 	TGTOKEN="TELEGRAM TOKEN"				# This is your super secret bot token, keep it private
 	TGCHATID="TELEGRAM CHAT ID"				# Send only as the user in a private message
@@ -178,14 +182,14 @@ self_update()
 # The script starts here - Functions first
 ########################################################################################################
 
-echo "test - 9"
-
 # Lets make sure we have some tools we need.  If not then the script will try to install dnsutils, if it 
 # fails then exit.
 check_for_deps
 
 # Look for updates to the script
-self_update "${ARGS}"
+if [ "${USE_SELFUPATE}" = "YES" ]; then
+	self_update "${ARGS}"
+fi
 
 # Waiting for network .. this is needed to make sure the pi has network before we actually run through
 # the rest of the script.  This will loop forever until network is found.  Shouldn't cause any issues
