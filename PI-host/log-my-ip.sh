@@ -142,6 +142,34 @@ send_message_to_server()
 	fi
 }
 
+self_update() 
+{
+    [ "$UPDATE_GUARD" ] && return
+    export UPDATE_GUARD=YES
+
+	_SCRIPT=$(readlink -f "$0")
+	_SCRIPTPATH=$(dirname "$_SCRIPT")
+	_SCRIPTNAME="$0"
+	_ARGS="( $@ )"
+	_BRANCH="master"
+
+    cd $_SCRIPTPATH
+    git fetch
+
+    [ -n $(git diff --name-only origin/$_BRANCH | grep $_SCRIPTNAME) ] && {
+        echo "Found a new version of me, updating myself..."
+        git pull --force
+        git checkout $_BRANCH
+        git pull --force
+        echo "Running the new version..."
+        exec "$_SCRIPTNAME" "${_ARGS[@]}"
+
+        # Now exit this old instance
+        exit 1
+    }
+    echo "Already the latest version."
+}
+
 ########################################################################################################
 # The script starts here - Functions first
 ########################################################################################################
