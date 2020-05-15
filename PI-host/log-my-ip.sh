@@ -155,7 +155,7 @@ self_update()
 	_SCRIPTPATH=$(dirname "$_SCRIPT")
 	_SCRIPTNAME="$0"
 	#ARGS="$@"
-	_BRANCH="selfupdate-test"
+	_BRANCH="master"
 
     cd $_SCRIPTPATH
     git fetch
