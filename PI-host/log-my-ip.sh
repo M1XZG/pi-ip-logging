@@ -152,7 +152,7 @@ self_update()
 	_SCRIPT=$(readlink -f "$0")
 	_SCRIPTPATH=$(dirname "$_SCRIPT")
 	_SCRIPTNAME="$0"
-	ARGS="( $@ )"
+	ARGS="$@"
 	_BRANCH="selfupdate-test"
 
     cd $_SCRIPTPATH
@@ -176,7 +176,7 @@ self_update()
 # The script starts here - Functions first
 ########################################################################################################
 
-echo "test - 7"
+echo "test - 8"
 
 # Lets make sure we have some tools we need.  If not then the script will try to install dnsutils, if it 
 # fails then exit.
