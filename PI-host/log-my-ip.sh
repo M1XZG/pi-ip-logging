@@ -152,7 +152,7 @@ self_update()
 	_SCRIPT=$(readlink -f "$0")
 	_SCRIPTPATH=$(dirname "$_SCRIPT")
 	_SCRIPTNAME="$0"
-	_ARGS="( $@ )"
+	ARGS="( $@ )"
 	_BRANCH="selfupdate-test"
 
     cd $_SCRIPTPATH
@@ -164,7 +164,7 @@ self_update()
         git checkout $_BRANCH
         git pull --force
         echo "Running the new version..."
-        exec "$_SCRIPTNAME" "${_ARGS[@]}"
+        exec "$_SCRIPTNAME" "${ARGS[@]}"
 
         # Now exit this old instance
         exit 1
