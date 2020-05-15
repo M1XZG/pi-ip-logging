@@ -153,7 +153,7 @@ self_update()
 	_SCRIPTPATH=$(dirname "$_SCRIPT")
 	_SCRIPTNAME="$0"
 	_ARGS="( $@ )"
-	_BRANCH="master"
+	_BRANCH="selfupdate-test"
 
     cd $_SCRIPTPATH
     git fetch
@@ -175,6 +175,8 @@ self_update()
 ########################################################################################################
 # The script starts here - Functions first
 ########################################################################################################
+
+echo "test - 1"
 
 # Lets make sure we have some tools we need.  If not then the script will try to install dnsutils, if it 
 # fails then exit.
