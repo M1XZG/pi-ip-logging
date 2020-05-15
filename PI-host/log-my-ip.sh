@@ -176,14 +176,14 @@ self_update()
 # The script starts here - Functions first
 ########################################################################################################
 
-echo "test - 2"
+echo "test - 5"
 
 # Lets make sure we have some tools we need.  If not then the script will try to install dnsutils, if it 
 # fails then exit.
 check_for_deps
 
 # Look for updates to the script
-self_update
+self_update "$1"
 
 # Waiting for network .. this is needed to make sure the pi has network before we actually run through
 # the rest of the script.  This will loop forever until network is found.  Shouldn't cause any issues
