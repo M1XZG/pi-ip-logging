@@ -176,7 +176,7 @@ self_update()
 # The script starts here - Functions first
 ########################################################################################################
 
-echo "test - 5"
+echo "test - 6"
 
 # Lets make sure we have some tools we need.  If not then the script will try to install dnsutils, if it 
 # fails then exit.
