@@ -2,6 +2,6 @@
 # Rename to remove the .CRONTAB (but it's not required, it'll work fine with the current name)
 
 # Run at reboot
-@reboot root /root/pi-ip-logging/PI-host REBOOT
+@reboot root /root/pi-ip-logging/PI-host/log-my-ip.sh REBOOT
 # Run at a set time each day
-0 0 * * * root /root/pi-ip-logging/PI-host SCHEDULED
+0 0 * * * root /root/pi-ip-logging/PI-host/log-my-ip.sh SCHEDULED
