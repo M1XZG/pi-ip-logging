@@ -46,6 +46,8 @@ _WHITE='\033[01;37m'
 # Set a path so we know we can find what we require to run.
 PATH=${PATH}:/usr/sbin:/usr/bin:/sbin:/bin
 
+ARGS="$@"
+
 # We need this module installed to run, if it's not installed it will be after you run the script the
 # first time :D
 DEP="dnsutils"
@@ -152,7 +154,7 @@ self_update()
 	_SCRIPT=$(readlink -f "$0")
 	_SCRIPTPATH=$(dirname "$_SCRIPT")
 	_SCRIPTNAME="$0"
-	ARGS="$@"
+	#ARGS="$@"
 	_BRANCH="selfupdate-test"
 
     cd $_SCRIPTPATH
@@ -164,7 +166,7 @@ self_update()
         git checkout $_BRANCH
         git pull --force
         echo "Running the new version..."
-        exec "$_SCRIPTNAME" "${ARGS[@]}"
+        exec "$_SCRIPTNAME" "${ARGS}"
 
         # Now exit this old instance
         exit 1
@@ -176,14 +178,14 @@ self_update()
 # The script starts here - Functions first
 ########################################################################################################
 
-echo "test - 8"
+echo "test - 9"
 
 # Lets make sure we have some tools we need.  If not then the script will try to install dnsutils, if it 
 # fails then exit.
 check_for_deps
 
 # Look for updates to the script
-self_update "$1"
+self_update "${ARGS}"
 
 # Waiting for network .. this is needed to make sure the pi has network before we actually run through
 # the rest of the script.  This will loop forever until network is found.  Shouldn't cause any issues
@@ -199,10 +201,10 @@ else
 		PING=$?
 	done
 
-	if [ "$1" = "" ]; then
+	if [ "${ARGS}" = "" ]; then
 		note="Manual Update"
 	else
-		note="$1"
+		note="${ARGS}"
 	fi
 fi
 
