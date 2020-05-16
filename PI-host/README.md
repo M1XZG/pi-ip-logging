@@ -39,7 +39,6 @@ https://www.home-assistant.io/components/telegram/
 The `log-my-ip.sh` script requires no arguements, but whatever you supply will be used as the note that's sent to your or logged. If you look in `/etc/cron.d/log-my-ip` you'll see on reboot the script is called with *REBOOT* and nightly at midnight when I run my daily checkpoint it uses *SCHEDULED*, you can of course change these. If you want to use more than ONE word, just wrap the words in double quotes.
 
 ![Example Telegram Message](../media/telegram-sample.jpg)
-![Example Telegram Message](../media/telegram-sample-2.jpg)
 
 This is a run of the script where changes to the repo were found, these are pulled down and the script is run again with the updated version. The `log-my-ip.sh` ins't updated in this run, but other files where, so these are brought down. To have ONLY the script update it would need to be in it's own repo or even a branch of it's own.
 
@@ -70,5 +69,10 @@ Already up-to-date.
 Running the new version...
 [ TELEGRAM OUTPUT REMOVED ]
 ```
+
+The telegram message recieved from the above run was
+
+![Example Telegram Message](../media/telegram-sample-2.jpg)
+
 
 ---
