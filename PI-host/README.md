@@ -1,14 +1,18 @@
 # How to use this script and supporting files
 
-The way I operate this script is to clone the repo into a folder somewhere, personally I put it in `/root/`, so my folder structure will look like
+The way I operate this script is to clone the repo into a folder somewhere, such as in `/root/`, so my folder structure will look like
 
 `/root/pi-ip-logging/...`
 
-I do this only because the CRONTAB I've created has directive to run the script `@REBOOT`, this can only be done if the script is run as root, so might as well store it in the same place. Another reason to run as root is it will attempt to install any dependencies using `apt-get`, at this time the only real dependency is `dnsutils`, most other commands are stock and found in typical installs.
+I do this only because the CRONTAB I've created has directive to run the script `@REBOOT`, this can only be done if the script is run as root. Another reason to run as root is it will attempt to install any dependencies using `apt-get`, at this time the only real dependency is `dnsutils`, most other commands called are stock and found in typical installs.
 
 ## Self Updating Script
 
-If you want to use the self-updating function of the script (it's disabled out of the box), then you need to run the script from the cloned repo folder so the GIT data is intact. I install using the process similar to
+If you want to use the self-updating function of the script (it's disabled out of the box), then you need to run the script from the cloned repo folder so the GIT data is intact. 
+
+## Setting up
+
+I install using the process similar to
 
 ```
 cd /root
@@ -19,7 +23,11 @@ chmod 644 /etc/cron.d/log-my-ip
 chown root.root /etc/cron.d/log-my-ip
 ```
 
-At this point you should double check `/etc/cron.d/log-my-ip` to make sure the paths to the script are correct.
+At this point you should double check `/etc/cron.d/log-my-ip` to make sure the paths to the script are correct, if you've left the repo cloned in `/root/` then it will be.
+
+### log-my-ip.ini
+
+This file isn't required if you want to just customize the varibles in the script, however, that will prevent you from using the self-updating part as your changes will be lost to the script. The INI file just contains all the variables required by the script, the default location for this is `/usr/local/etc/log-my-ip.ini`, again, changing this could break. _(I have a future plan to allow the updating of the INI file from perhaps your private webserver or something, GitHub would be bad for this as it will contain secrets you don't want anyone to get)_
 
 ### log-my-ip.sh
 
@@ -28,9 +36,10 @@ This script is run on the Debian linux machines, like the [Raspberry Pi](https:/
 To use telegram you will need to create a telegram bot (or use an existing one) and you'll also need the chat / group / channel ID for the bot to receive messages and display them.  There are many guides to figure out how to get the chat id's and such, but check out:
 https://www.home-assistant.io/components/telegram/
 
-![Example Telegram Message](../media/telegram-sample.jpg)
-
 The `log-my-ip.sh` script requires no arguements, but whatever you supply will be used as the note that's sent to your or logged. If you look in `/etc/cron.d/log-my-ip` you'll see on reboot the script is called with *REBOOT* and nightly at midnight when I run my daily checkpoint it uses *SCHEDULED*, you can of course change these. If you want to use more than ONE word, just wrap the words in double quotes.
+
+![Example Telegram Message](../media/telegram-sample.jpg)
+![Example Telegram Message](../media/telegram-sample-2.jpg)
 
 This is a run of the script where changes to the repo were found, these are pulled down and the script is run again with the updated version. The `log-my-ip.sh` ins't updated in this run, but other files where, so these are brought down. To have ONLY the script update it would need to be in it's own repo or even a branch of it's own.
 
@@ -62,15 +71,4 @@ Running the new version...
 [ TELEGRAM OUTPUT REMOVED ]
 ```
 
-
-
-### log-my-ip.CRONTAB
-
-This should be placed in /etc/cron.d/  it will run at boot time as well whatever time(s) you set (midnight by default).
-
-```
-cp log-my-ip.CRONTAB /etc/cron.d/log-my-ip
-chmod 644 /etc/cron.d/log-my-ip
-chown root.root /etc/cron.d/log-my-ip
-```
 ---
