@@ -1,3 +1,13 @@
+# Important - Dependencies required
+
+The script doesn't rely on too much, however you must have the following installed for it to operate:
+
+* curl
+* lsb_release (out of box for Ubuntu, but needs `redhat-lsb-core` for CentOS/RHEL)
+* dig (install `dnsutils` on DEB systems and `bind-utils` on RPM systems)
+
+---
+
 # How to use this script and supporting files
 
 The way I operate this script is to clone the repo into a folder somewhere, such as in `/root/`, so my folder structure will look like
