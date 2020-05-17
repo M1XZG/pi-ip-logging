@@ -122,12 +122,12 @@ check_for_deps()
 		echo -e "${_RED}Oh SNAP! Looks like you're missing some dependencies.${_RESTORE}"
 		if [ ${_HAVE_DIG} = 1 ]; then
 			echo
-			echo -e "Unable to find the ${_RED}dig${_RESTORE} command. Please install dnsutils"
+			echo -e "Unable to find the ${_RED}dig${_RESTORE} command. Please install ${_GREEN}dnsutils${_RESTORE}."
 			echo
 		fi
 		if [ ${_HAVE_LSB} = 1 ]; then
 			echo
-			echo -e "Unable to find the ${_RED}lsb_release${_RESTORE} command. Please install ${_GREEN}redhat-lsb-core${_RESTORE} in CentOS and RHEL"
+			echo -e "Unable to find the ${_RED}lsb_release${_RESTORE} command. Please install ${_GREEN}redhat-lsb-core${_RESTORE} in CentOS and RHEL."
 			echo
 		fi
 		exit 1
