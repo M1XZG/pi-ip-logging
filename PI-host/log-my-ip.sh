@@ -182,7 +182,7 @@ self_update()
     cd $_SCRIPTPATH
     git fetch
 
-# test
+# test 2
 	git diff --name-only origin/$GIT_BRANCH | grep $_SCRIPTNAME &> /dev/null
 	_HAS_UPDATE=$?
 
