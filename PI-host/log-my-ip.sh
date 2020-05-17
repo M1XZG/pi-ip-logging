@@ -61,6 +61,9 @@ if [ -f /usr/local/etc/log-my-ip.ini ]; then
 	source /usr/local/etc/log-my-ip.ini
 else
 
+	# This the branch used to check for updates
+	GIT_BRANCH="master"
+
 	# If you want to use the self updating function, change the from NO to YES
 	USE_SELFUPATE=NO
 
@@ -110,16 +113,56 @@ mydate="$(date)"
 # Test for dnsutils - we need the dig command
 check_for_deps()
 {
-	dpkg -s ${DEP}  | grep Status | grep -q "Status: install ok installed" &> /dev/null
-	CMDRES=$?
+	which dig &> /dev/null
+	_HAVE_DIG=$?
 
-	if [ ${CMDRES} = 1 ]; then
-		sudo apt install ${DEP} -y || { echo -e "${_RED}Oh SNAP, something went wrong.  I couldn't install the dnsutils package${_RESTORE}."; exit 1; }
+	if [ ${_HAVE_DIG} = 1 ]; then
+		check_os
+		${_PKGINST} ${_PKGINSTARGS} ${_DEP} || { echo -e "${_RED}Oh SNAP, something went wrong.  I couldn't install the dnsutils package${_RESTORE}."; exit 1; }
 		extip="$(dig +short myip.opendns.com @resolver1.opendns.com)"
 	else
 		extip="$(dig +short myip.opendns.com @resolver1.opendns.com)"
 	fi
 }
+
+# Called from check_for_deps function only.
+check_os()
+{
+	# Checking which flavour of Ubuntu we're using...
+	_OSID=`lsb_release -i | awk '{print $3}'`                       # Gives release number, ie: Ubuntu (or RedHatEnterpriseServer)
+	_RELEASE=`lsb_release -r | awk '{print $2}'`					# Gives release number, ie: 16.04 (ie: 7.6 for RHEL)
+	_CODENAME=`lsb_release -c | awk '{print $2}'`					# Gives release codename, ie: xenial (ie: Maipo for RHEL)
+	_CODENAME=$(echo "${_CODENAME}" | tr '[:upper:]' '[:lower:]')	# Ensure response is in lower case 
+
+	case $_OSID in
+	    RedHatEnterpriseServer|CentOS|AmazonAMI)
+	        _OSTYPE="rpm"
+			_PKGINST=`which yum`
+			_PKGINSTARGS=" -y install "
+			_PKGCHK=`which rpm`
+			_PKGCHKARGS=" -qa "
+			_DEP="bind-utils"
+	    ;;
+	    Ubuntu|Debian)
+	        _OSTYPE="pkg"
+			_PKGINST=`which apt`
+			_PKGINSTARGS=" -y install "
+			_PKGCHK=`which dpkg`
+			_PKGCHKARGS=" -s "
+			_DEP="dnsutils"
+	    ;;
+	    *)
+	        _OSTYPE="unknown"
+	    ;;
+	esac
+
+	# uncomment for debugging only.
+	# echo "OSID          : ${_OSID}"
+	# echo "RELEASE       : ${_RELEASE}"
+	# echo "CODENAME      : ${_CODENAME}"
+	# echo "OSTYPE        : ${_OSTYPE}"
+}
+
 
 send_message_to_telegram()
 {
@@ -159,15 +202,14 @@ self_update()
 	_SCRIPTPATH=$(dirname "$_SCRIPT")
 	_SCRIPTNAME="$0"
 	#ARGS="$@"
-	_BRANCH="master"
 
     cd $_SCRIPTPATH
     git fetch
 
-    [ -n $(git diff --name-only origin/$_BRANCH | grep $_SCRIPTNAME) ] && {
+    [ -n $(git diff --name-only origin/$GIT_BRANCH | grep $_SCRIPTNAME) ] && {
         echo "Found a new version of me, updating myself..."
         git pull --force
-        git checkout $_BRANCH
+        git checkout $GIT_BRANCH
         git pull --force
         echo "Running the new version..."
         exec "$_SCRIPTNAME" "${ARGS}"
