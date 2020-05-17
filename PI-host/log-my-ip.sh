@@ -122,7 +122,8 @@ check_for_deps()
 		echo -e "${_RED}Oh SNAP! Looks like you're missing some dependencies.${_RESTORE}"
 		if [ ${_HAVE_DIG} = 1 ]; then
 			echo
-			echo -e "Unable to find the ${_RED}dig${_RESTORE} command. Please install ${_GREEN}dnsutils${_RESTORE}."
+			echo -e "Unable to find the ${_RED}dig${_RESTORE} command. Please install ${_GREEN}dnsutils${_RESTORE} on DEB systems,"
+			echo -e "and ${_GREEN}bind-utils${_RESTORE} on RPM systems."
 			echo
 		fi
 		if [ ${_HAVE_LSB} = 1 ]; then
