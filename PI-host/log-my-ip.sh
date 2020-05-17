@@ -137,45 +137,6 @@ check_for_deps()
 	fi
 }
 
-# Called from check_for_deps function only.
-check_os()
-{
-	# Checking which flavour of Ubuntu we're using...
-	_OSID=`lsb_release -i | awk '{print $3}'`                       # Gives release number, ie: Ubuntu (or RedHatEnterpriseServer)
-	_RELEASE=`lsb_release -r | awk '{print $2}'`					# Gives release number, ie: 16.04 (ie: 7.6 for RHEL)
-	_CODENAME=`lsb_release -c | awk '{print $2}'`					# Gives release codename, ie: xenial (ie: Maipo for RHEL)
-	_CODENAME=$(echo "${_CODENAME}" | tr '[:upper:]' '[:lower:]')	# Ensure response is in lower case 
-
-	case $_OSID in
-	    RedHatEnterpriseServer|CentOS|AmazonAMI)
-	        _OSTYPE="rpm"
-			_PKGINST=`which yum`
-			_PKGINSTARGS=" -y install "
-			_PKGCHK=`which rpm`
-			_PKGCHKARGS=" -qa "
-			_DEP=${_RPM_DEP}
-	    ;;
-	    Ubuntu|Debian)
-	        _OSTYPE="pkg"
-			_PKGINST=`which apt`
-			_PKGINSTARGS=" -y install "
-			_PKGCHK=`which dpkg`
-			_PKGCHKARGS=" -s "
-			_DEP=${_DEB_DEP}
-	    ;;
-	    *)
-	        _OSTYPE="unknown"
-	    ;;
-	esac
-
-	# uncomment for debugging only.
-	# echo "OSID          : ${_OSID}"
-	# echo "RELEASE       : ${_RELEASE}"
-	# echo "CODENAME      : ${_CODENAME}"
-	# echo "OSTYPE        : ${_OSTYPE}"
-}
-
-
 send_message_to_telegram()
 {
     tmpfile=$(mktemp /tmp/telebot.XXXXXXX)
