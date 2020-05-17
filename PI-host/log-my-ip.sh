@@ -115,11 +115,22 @@ check_for_deps()
 {
 	which dig &> /dev/null
 	_HAVE_DIG=$?
+	which lsb_release &> /dev/null
+	_HAVE_LSB=$?
 
-	if [ ${_HAVE_DIG} = 1 ]; then
-		check_os
-		${_PKGINST} ${_PKGINSTARGS} ${_DEP} || { echo -e "${_RED}Oh SNAP, something went wrong.  I couldn't install the dnsutils package${_RESTORE}."; exit 1; }
-		extip="$(dig +short myip.opendns.com @resolver1.opendns.com)"
+	if [ ${_HAVE_DIG} = 1 ] || [ ${_HAVE_LSB} = 1 ]; then
+		echo -e "${_RED}Oh SNAP! Looks like you're missing some dependencies.${_RESTORE}"
+		if [ ${_HAVE_DIG} = 1 ] then
+			echo
+			echo -e "Unable to find the ${_RED}dig${_RESTORE} command. Please install dnsutils"
+			echo
+		fi
+		if [ ${_HAVE_LSB} = 1 ] then
+			echo
+			echo -e "Unable to find the ${_RED}lsb_release${_RESTORE} command. Please install ${_GREEN}redhat-lsb-core${_RESTORE} in CentOS and RHEL"
+			echo
+		fi
+		exit 1
 	else
 		extip="$(dig +short myip.opendns.com @resolver1.opendns.com)"
 	fi
