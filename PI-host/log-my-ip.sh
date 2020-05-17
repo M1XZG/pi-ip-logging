@@ -50,8 +50,8 @@ ARGS="$@"
 
 # We need this module installed to run, if it's not installed it will be after you run the script the
 # first time :D
-DEP="dnsutils"
-
+_RPM_DEP="dnsutils redhat-lsb-core"
+_DEB_DEP="dnsutils"
 ########################################################################################################
 # Configure all your variables here for the script.
 ########################################################################################################
@@ -141,7 +141,7 @@ check_os()
 			_PKGINSTARGS=" -y install "
 			_PKGCHK=`which rpm`
 			_PKGCHKARGS=" -qa "
-			_DEP="bind-utils"
+			_DEP=${_RPM_DEP}
 	    ;;
 	    Ubuntu|Debian)
 	        _OSTYPE="pkg"
@@ -149,7 +149,7 @@ check_os()
 			_PKGINSTARGS=" -y install "
 			_PKGCHK=`which dpkg`
 			_PKGCHKARGS=" -s "
-			_DEP="dnsutils"
+			_DEP=${_DEB_DEP}
 	    ;;
 	    *)
 	        _OSTYPE="unknown"
