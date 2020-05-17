@@ -48,10 +48,6 @@ PATH=${PATH}:/usr/sbin:/usr/bin:/sbin:/bin
 
 ARGS="$@"
 
-# We need this module installed to run, if it's not installed it will be after you run the script the
-# first time :D
-_RPM_DEP="dnsutils redhat-lsb-core"
-_DEB_DEP="dnsutils"
 ########################################################################################################
 # Configure all your variables here for the script.
 ########################################################################################################
@@ -117,8 +113,10 @@ check_for_deps()
 	_HAVE_DIG=$?
 	which lsb_release &> /dev/null
 	_HAVE_LSB=$?
+	which curl &> /dev/null
+	_HAVE_CURL=$?
 
-	if [ ${_HAVE_DIG} = 1 ] || [ ${_HAVE_LSB} = 1 ]; then
+	if [ ${_HAVE_DIG} = 1 ] || [ ${_HAVE_LSB} = 1 ] || [ ${_HAVE_CURL} = 1 ]; then
 		echo -e "${_RED}Oh SNAP! Looks like you're missing some dependencies.${_RESTORE}"
 		if [ ${_HAVE_DIG} = 1 ]; then
 			echo
@@ -129,6 +127,11 @@ check_for_deps()
 		if [ ${_HAVE_LSB} = 1 ]; then
 			echo
 			echo -e "Unable to find the ${_RED}lsb_release${_RESTORE} command. Please install ${_GREEN}redhat-lsb-core${_RESTORE} in CentOS and RHEL."
+			echo
+		fi
+		if [ ${_HAVE_CURL} = 1 ]; then
+			echo
+			echo -e "Unable to find the ${_RED}curl${_RESTORE} command. Please install ${_GREEN}curl${_RESTORE}."
 			echo
 		fi
 		exit 1
