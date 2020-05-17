@@ -48,10 +48,6 @@ PATH=${PATH}:/usr/sbin:/usr/bin:/sbin:/bin
 
 ARGS="$@"
 
-# We need this module installed to run, if it's not installed it will be after you run the script the
-# first time :D
-DEP="dnsutils"
-
 ########################################################################################################
 # Configure all your variables here for the script.
 ########################################################################################################
@@ -60,6 +56,9 @@ DEP="dnsutils"
 if [ -f /usr/local/etc/log-my-ip.ini ]; then
 	source /usr/local/etc/log-my-ip.ini
 else
+
+	# This the branch used to check for updates
+	GIT_BRANCH="multi-os"
 
 	# If you want to use the self updating function, change the from NO to YES
 	USE_SELFUPATE=NO
@@ -110,12 +109,32 @@ mydate="$(date)"
 # Test for dnsutils - we need the dig command
 check_for_deps()
 {
-	dpkg -s ${DEP}  | grep Status | grep -q "Status: install ok installed" &> /dev/null
-	CMDRES=$?
+	which dig &> /dev/null
+	_HAVE_DIG=$?
+	which lsb_release &> /dev/null
+	_HAVE_LSB=$?
+	which curl &> /dev/null
+	_HAVE_CURL=$?
 
-	if [ ${CMDRES} = 1 ]; then
-		sudo apt install ${DEP} -y || { echo -e "${_RED}Oh SNAP, something went wrong.  I couldn't install the dnsutils package${_RESTORE}."; exit 1; }
-		extip="$(dig +short myip.opendns.com @resolver1.opendns.com)"
+	if [ ${_HAVE_DIG} = 1 ] || [ ${_HAVE_LSB} = 1 ] || [ ${_HAVE_CURL} = 1 ]; then
+		echo -e "${_RED}Oh SNAP! Looks like you're missing some dependencies.${_RESTORE}"
+		if [ ${_HAVE_DIG} = 1 ]; then
+			echo
+			echo -e "Unable to find the ${_RED}dig${_RESTORE} command. Please install ${_GREEN}dnsutils${_RESTORE} on DEB systems,"
+			echo -e "and ${_GREEN}bind-utils${_RESTORE} on RPM systems."
+			echo
+		fi
+		if [ ${_HAVE_LSB} = 1 ]; then
+			echo
+			echo -e "Unable to find the ${_RED}lsb_release${_RESTORE} command. Please install ${_GREEN}redhat-lsb-core${_RESTORE} in CentOS and RHEL."
+			echo
+		fi
+		if [ ${_HAVE_CURL} = 1 ]; then
+			echo
+			echo -e "Unable to find the ${_RED}curl${_RESTORE} command. Please install ${_GREEN}curl${_RESTORE}."
+			echo
+		fi
+		exit 1
 	else
 		extip="$(dig +short myip.opendns.com @resolver1.opendns.com)"
 	fi
@@ -159,15 +178,17 @@ self_update()
 	_SCRIPTPATH=$(dirname "$_SCRIPT")
 	_SCRIPTNAME="$0"
 	#ARGS="$@"
-	_BRANCH="master"
 
     cd $_SCRIPTPATH
     git fetch
 
-    [ -n $(git diff --name-only origin/$_BRANCH | grep $_SCRIPTNAME) ] && {
+	git diff --name-only origin/$GIT_BRANCH | grep $_SCRIPTNAME &> /dev/null
+	_HAS_UPDATE=$?
+
+    [ ${_HAVE_DIG} = 1 ] && {
         echo "Found a new version of me, updating myself..."
         git pull --force
-        git checkout $_BRANCH
+        git checkout $GIT_BRANCH
         git pull --force
         echo "Running the new version..."
         exec "$_SCRIPTNAME" "${ARGS}"
