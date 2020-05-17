@@ -182,6 +182,7 @@ self_update()
     cd $_SCRIPTPATH
     git fetch
 
+# test
     [ -n $(git diff --name-only origin/$GIT_BRANCH | grep $_SCRIPTNAME) ] && {
         echo "Found a new version of me, updating myself..."
         git pull --force
