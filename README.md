@@ -32,10 +32,3 @@ The script doesn't rely on too much, however you must have the following install
 See the [README.md](PI-host/README.md) for more usage information.
 
 ---
-
-## Simple-Serverside/ 
-
-### _Currently this isn't really working._
-
-This script runs on the web server and is hit by a POST to store the info. Edit the PHP and change the filename variable if you want a different logging file.
-
