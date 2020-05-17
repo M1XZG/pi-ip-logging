@@ -62,7 +62,7 @@ if [ -f /usr/local/etc/log-my-ip.ini ]; then
 else
 
 	# This the branch used to check for updates
-	GIT_BRANCH="master"
+	GIT_BRANCH="multi-os"
 
 	# If you want to use the self updating function, change the from NO to YES
 	USE_SELFUPATE=NO
