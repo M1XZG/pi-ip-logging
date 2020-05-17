@@ -1,6 +1,8 @@
 # IP Logging for Pi's
 
-### _**Only supports Debian based systems right now**_
+## FORK ME!!!
+
+If you intend to use this, please be sure to fork this to your account. I may make changes to the script in the future and this could break your usage if you're cloning my repo. 
 ----
 
 ## What?
