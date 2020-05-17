@@ -15,6 +15,14 @@ I have a number of headless PI's distributed about for different purposes and li
 
 Firstly, these scripts work for me and may or may not work for you.  The script `PI-host/log-my-ip.sh` has 2 functions, one is to connect to webserver and dump some CSV and/or send that info via Telegram to me. The `Simple-Serverside` runs on a small server listening for connections from the `log-my-ip.sh` script which is just pushing some data to the php script, this is then logged in a CSV format.  Mostly this is just for some historical value, I don't currently use this for anything specific but I suppose you could. This really doesn't work super well as I've not put much effort all into this, for me the Telegram notifications are far more useful.
 
+# Important - Dependencies required
+
+The script doesn't rely on too much, however you must have the following installed for it to operate:
+
+* curl
+* lsb_release (out of box for Ubuntu, but needs `redhat-lsb-core` for CentOS/RHEL)
+* dig (install `dnsutils` on DEB systems and `bind-utils` on RPM systems)
+
 ---
 
 # More information
