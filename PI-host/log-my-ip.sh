@@ -183,7 +183,10 @@ self_update()
     git fetch
 
 # test
-    [ -n $(git diff --name-only origin/$GIT_BRANCH | grep $_SCRIPTNAME) ] && {
+	git diff --name-only origin/$GIT_BRANCH | grep $_SCRIPTNAME &> /dev/null
+	_HAS_UPDATE=$?
+
+    [ ${_HAVE_DIG} = 0 ] && {
         echo "Found a new version of me, updating myself..."
         git pull --force
         git checkout $GIT_BRANCH
