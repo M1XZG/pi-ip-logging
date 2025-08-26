@@ -137,7 +137,7 @@ self_update() {
                 notify_discord_update "$local_before" "$local_after" "${_BRANCH}"
             fi
             echo "Running the new version..."
-            exec "$_SCRIPTNAME" "${RAW_ARGS[@]}"
+            exec "$_SCRIPT" "${RAW_ARGS[@]}"
             exit 0
         fi
     )

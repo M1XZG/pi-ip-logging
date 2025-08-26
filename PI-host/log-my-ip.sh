@@ -277,7 +277,7 @@ self_update()
 				note="${__old_note}"
 			fi
 			echo "Running the new version..."
-			exec "$_SCRIPTNAME" "${ARGS}"
+			exec "$_SCRIPT" "${ARGS}"
 			exit 0
 		fi
 	)
