@@ -153,6 +153,18 @@ Setup steps:
    - Rich embeds by default showing: Hostname, Internal IP, External IP, OS, Kernel, Uptime
    - Accepts notes via positional args or flags: `--reboot`, `--scheduled`, `-m|--note "message"`
 
+  ### Enabling self-update from CLI
+
+  Both scripts can enable self-update by updating `/usr/local/etc/log-my-ip.ini`:
+
+  ```sh
+  # Requires root
+  ./log-my-ip.sh --enable-self-update
+  ./log-my-ip-discord.sh --enable-self-update
+  ```
+
+  This sets `USE_SELFUPATE=YES` and `GIT_BRANCH="main"` in the INI (creating it if missing).
+
    ## External IP detection
 
    Both scripts now resolve the external IPv4 using multiple strategies:
