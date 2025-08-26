@@ -38,34 +38,45 @@ if [ -n "${TERM:-}" ] && [ "$TERM" != "dumb" ] && [ -t 1 ] && command -v tput >/
 	_BOLD=$(tput bold 2>/dev/null || printf '')
 else
 	_RESTORE=''
-	_RED=''
-	_GREEN=''
-	_YELLOW=''
-	_BLUE=''
-	_PURPLE=''
-	_WHITE=''
-fi
+	# Safer self-update similar to Discord script
 
-########################################################################################################
-#
-# Uncomment this section if you wish to ensure the script is only run as a specific user
-# root is the default, but this could be any valid user.
-#
-#		if [[ $EUID -ne 0 ]]; then
-#       	echo -e "${_BOLD}Script must be run as user:${_RESTORE} ${_RED}root${_RESTORE}"
-#           exit -1
-#		fi
-########################################################################################################
-# Set a path so we know we can find what we require to run.
-PATH=${PATH}:/usr/sbin:/usr/bin:/sbin:/bin
+	[ "$UPDATE_GUARD" ] && return
+	export UPDATE_GUARD=YES
 
-ARGS="$@"
+	_SCRIPT=$(readlink -f "$0")
+	_SCRIPTPATH=$(dirname "$_SCRIPT")
+	_SCRIPTNAME="$0"
 
-########################################################################################################
-# Configure all your variables here for the script.
-########################################################################################################
-
-# If you want to keep the 5 variables below in a config file that you can manage by script, ansible, etc
+	(
+		cd "$_SCRIPTPATH" || exit 0
+		command -v git >/dev/null 2>&1 || exit 0
+		git fetch --all --quiet || exit 0
+		local _BRANCH
+		_BRANCH=${GIT_BRANCH:-main}
+		git show-ref --verify --quiet "refs/remotes/origin/${_BRANCH}" || exit 0
+		local local_before remote_target local_after
+		local_before=$(git rev-parse --verify HEAD 2>/dev/null) || exit 0
+		remote_target=$(git rev-parse --verify "origin/${_BRANCH}" 2>/dev/null) || exit 0
+		if [ "$local_before" != "$remote_target" ]; then
+			echo "Found a new version of me, updating myself..."
+			git checkout -q "${_BRANCH}" || true
+			git pull --force -q || true
+			local_after=$(git rev-parse --verify HEAD 2>/dev/null) || local_after="unknown"
+			# Optionally send a Telegram notice about the update
+			if [ -n "${TGTOKEN:-}" ] && [ -n "${TGGRPID:-}" ]; then
+				__old_note="${note:-}"
+				old_short=$(printf '%s' "$local_before" | cut -c1-7)
+				new_short=$(printf '%s' "$local_after" | cut -c1-7)
+				note="Self-update applied on ${hostname} (branch ${_BRANCH}): ${old_short} -> ${new_short}"
+				send_message_to_telegram || true
+				note="${__old_note}"
+			fi
+			echo "Running the new version..."
+			exec "$_SCRIPTNAME" "${ARGS}"
+			exit 0
+		fi
+	)
+	echo "Already the latest version."
 if [ -f /usr/local/etc/log-my-ip.ini ]; then
 	source /usr/local/etc/log-my-ip.ini
 else
