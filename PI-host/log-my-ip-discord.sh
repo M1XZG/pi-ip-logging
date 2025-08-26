@@ -240,8 +240,13 @@ get_uptime_pretty() {
 
 send_message_to_discord() {
     if [ -z "${DISCORD_WEBHOOK_URL}" ]; then
-        echo -e "${_YELLOW}DISCORD_WEBHOOK_URL not set. Skipping Discord notification.${_RESTORE}"
-        return 0
+        {
+            echo -e "${_RED}Error:${_RESTORE} DISCORD_WEBHOOK_URL is not configured."
+            echo "Set it in /usr/local/etc/log-my-ip.ini, for example:"
+            echo "  DISCORD_WEBHOOK_URL=\"https://discord.com/api/webhooks/<id>/<token>\""
+            echo "Alternatively, export DISCORD_WEBHOOK_URL in the environment for this job."
+        } >&2
+        return 1
     fi
 
     local note="$1"
