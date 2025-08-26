@@ -69,43 +69,107 @@ Setup steps:
 
    - `chmod +x /root/pi-ip-logging/PI-host/log-my-ip-discord.sh`
    - `cp /root/pi-ip-logging/PI-host/log-my-ip-discord.CRONTAB /etc/cron.d/log-my-ip-discord`
-   - `chmod 644 /etc/cron.d/log-my-ip-discord`
-   - `chown root.root /etc/cron.d/log-my-ip-discord`
+   # PI-host scripts
 
-4) Adjust paths in `/etc/cron.d/log-my-ip-discord` if your clone location differs from `/root/pi-ip-logging`.
+   Host-side scripts for sending IP and system info via Telegram or Discord.
 
-The Discord message contains: System Update note, Date, Hostname, Internal IP, and External IP.
+   ## Dependencies
 
-root@tinkerbell:~/pi-ip-logging/PI-host# ./log-my-ip.sh "A message 4 U"
-remote: Enumerating objects: 21, done.
-remote: Counting objects: 100% (21/21), done.
-remote: Compressing objects: 100% (13/13), done.
-remote: Total 17 (delta 3), reused 13 (delta 3), pack-reused 0
-Unpacking objects: 100% (17/17), done.
-From https://github.com/M1XZG/pi-ip-logging
-   cc966e6..d1a4bff  master     -> origin/master
-Found a new version of me, updating myself...
-Updating cc966e6..d1a4bff
-Fast-forward
- CODE_OF_CONDUCT.md        |  76 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- PI-host/README.md         |  25 ++++++++++++++++++++++++-
- README.md                 |  25 +++----------------------
- media/telegram-sample.jpg | Bin 0 -> 17243 bytes
- media/telegram-sample.png | Bin 0 -> 10542 bytes
- 5 files changed, 103 insertions(+), 23 deletions(-)
- create mode 100644 CODE_OF_CONDUCT.md
- create mode 100644 media/telegram-sample.jpg
- create mode 100644 media/telegram-sample.png
-Already on 'master'
-Your branch is up-to-date with 'origin/master'.
-Already up-to-date.
-Running the new version...
-[ TELEGRAM OUTPUT REMOVED ]
-```
+   Install the following on the host:
 
-The telegram message recieved from the above run was
+   - curl
+   - lsb_release (built-in on Ubuntu; use `redhat-lsb-core` for CentOS/RHEL)
+   - dig (install `dnsutils` on DEB systems and `bind-utils` on RPM systems)
 
-![Example Telegram Message](../media/telegram-sample-2.jpg)
+   ## Setup
 
+   Clone and install cron entries (example paths assume `/root/pi-ip-logging`):
 
----
+   ```sh
+   cd /root
+   git clone https://github.com/M1XZG/pi-ip-logging.git
+   chmod +x /root/pi-ip-logging/PI-host/log-my-ip.sh
+   cp /root/pi-ip-logging/PI-host/log-my-ip.CRONTAB /etc/cron.d/log-my-ip
+   chmod 644 /etc/cron.d/log-my-ip
+   chown root.root /etc/cron.d/log-my-ip
+
+   # Discord (optional)
+   chmod +x /root/pi-ip-logging/PI-host/log-my-ip-discord.sh
+   cp /root/pi-ip-logging/PI-host/log-my-ip-discord.CRONTAB /etc/cron.d/log-my-ip-discord
+   chmod 644 /etc/cron.d/log-my-ip-discord
+   chown root.root /etc/cron.d/log-my-ip-discord
+   ```
+
+   Adjust paths in `/etc/cron.d/*` if your clone location differs.
+
+   ## Configuration (log-my-ip.ini)
+
+   Default path is `/usr/local/etc/log-my-ip.ini`. If not present, scripts use built-in defaults.
+
+   Telegram settings:
+
+   - `TGTOKEN` – Bot token
+   - `TGCHATID` – Direct chat ID
+   - `TGGRPID` – Group/channel ID
+
+   Discord settings:
+
+   - `DISCORD_WEBHOOK_URL` – Required for Discord notifications
+   - `DISCORD_USERNAME` – Optional sender name
+   - `DISCORD_AVATAR_URL` – Optional avatar URL
+   - `DISCORD_EMBED_COLOR` – Integer RGB (e.g., 3066993)
+   - `DISCORD_USE_EMBEDS` – YES/NO (default YES)
+
+   Network wait behavior:
+
+   - `_my_network_range` – Prefix to detect local LAN, e.g., `192.168.0` or `172.16.29`
+     - Set to `ANY` or leave empty to accept any non-empty IP (useful on hosted servers)
+   - `NETWORK_WAIT_MAX_ATTEMPTS` – Attempts waiting for a LAN match (5s per attempt), default 24 (~2 minutes)
+
+   Other:
+
+   - `USE_SELFUPATE` – Enable self-update when running from a git clone
+   - `GIT_BRANCH` – Branch to check for updates
+
+   Migration helper:
+
+   - Use `PI-host/migrate-log-my-ip-ini.sh` to safely add new keys without overwriting existing values
+     - `--dry-run` to preview changes
+     - `--from-template` [--template-path /path/to/template] to rebuild from template while preserving known values
+
+   ## Usage
+
+   Telegram script: `log-my-ip.sh`
+
+   - Sends hostname, internal IP, external IP, and date/time via Telegram
+   - Optional post to your server (if configured)
+   - Arguments are used as the note; examples used by cron:
+     - `REBOOT` at startup
+     - `SCHEDULED` nightly
+
+   Discord script: `log-my-ip-discord.sh`
+
+   - Posts to a Discord channel via Incoming Webhook
+   - Rich embeds by default showing: Hostname, Internal IP, External IP, OS, Kernel, Uptime
+   - Accepts notes via positional args or flags: `--reboot`, `--scheduled`, `-m|--note "message"`
+
+   ## External IP detection
+
+   Both scripts now resolve the external IPv4 using multiple strategies:
+
+   1) DNS (if `dig` is available):
+      - Google DNS TXT: `o-o.myaddr.l.google.com @ns1.google.com`
+      - OpenDNS A record: `myip.opendns.com @resolver1.opendns.com`
+   2) HTTPS fallbacks (via `curl`): ipify, ifconfig.me, icanhazip, checkip.amazonaws.com, ipinfo.io
+
+   If all methods fail, `External IP` is set to `Unknown`.
+
+   ## Cron & environment notes
+
+   - Colors/tput are disabled when no TTY (cron-safe)
+   - Scripts wait for network; on non-LAN hosts set `_my_network_range=ANY` to avoid delays
+
+   ## Screenshots
+
+   ![Example Telegram Message](../media/telegram-sample.jpg)
+   ![Example Telegram Message 2](../media/telegram-sample-2.jpg)

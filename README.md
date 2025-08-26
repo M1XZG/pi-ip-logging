@@ -10,7 +10,7 @@ If you intend to use this, please be sure to fork this to your account. I may ma
 
 There are two parts to this project. The main part is the script `PI-host/log-my-ip.sh`, this will send messages to you on Telegram and/or connect to the simple php script `Simple-Serverside/log-ips.php` and dump some basic info in CSV format.
 
-New: If you prefer Discord, use `PI-host/log-my-ip-discord.sh` which posts to a Discord channel via web hook.
+New: If you prefer Discord, use `PI-host/log-my-ip-discord.sh` which posts to a Discord channel via web hook. See `PI-host/README.md` for setup.
 
 ## Why?
 
@@ -39,3 +39,12 @@ The script doesn't rely on too much, however you must have the following install
 See the [README.md](PI-host/README.md) for more usage information.
 
 ---
+
+## Network & external IP notes
+
+- On systems not on your home LAN, set `_my_network_range=ANY` (in `/usr/local/etc/log-my-ip.ini`) to accept any non-empty IP and avoid waits.
+- External IPv4 address is resolved robustly: tries DNS (Google/OpenDNS) first, then HTTPS fallbacks (ipify, ifconfig.me, icanhazip, checkip, ipinfo). If all fail, it shows `Unknown`.
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
