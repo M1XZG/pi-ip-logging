@@ -25,13 +25,26 @@
 # black and white kinda thing.
 
 _RESTORE='\033[0m'
-_BOLD=$(tput bold)
+_BOLD=''
 _RED='\033[00;31m'
 _GREEN='\033[00;32m'
 _YELLOW='\033[00;33m'
 _BLUE='\033[00;34m'
 _PURPLE='\033[00;35m'
 _WHITE='\033[01;37m'
+
+# Disable colors and tput in non-interactive environments (e.g., cron)
+if [ -n "${TERM:-}" ] && [ "$TERM" != "dumb" ] && [ -t 1 ] && command -v tput >/dev/null 2>&1; then
+	_BOLD=$(tput bold 2>/dev/null || printf '')
+else
+	_RESTORE=''
+	_RED=''
+	_GREEN=''
+	_YELLOW=''
+	_BLUE=''
+	_PURPLE=''
+	_WHITE=''
+fi
 
 ########################################################################################################
 #

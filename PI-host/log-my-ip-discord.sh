@@ -21,16 +21,29 @@
 
 ########################################################################################################
 # Colours
-_RESTORE='\033[0m'
-_BOLD=$(tput bold)
-_RED='\033[00;31m'
-_GREEN='\033[00;32m'
-_YELLOW='\033[00;33m'
+_RESTORE='\\033[0m'
+_BOLD=''
+_RED='\\033[00;31m'
+_GREEN='\\033[00;32m'
+_YELLOW='\\033[00;33m'
+
+########################################################################################################
+# Disable colors and tput in non-interactive environments (e.g., cron)
+if [ -n "${TERM:-}" ] && [ "$TERM" != "dumb" ] && [ -t 1 ] && command -v tput >/dev/null 2>&1; then
+    _BOLD=$(tput bold 2>/dev/null || printf '')
+else
+    _RESTORE=''
+    _RED=''
+    _GREEN=''
+    _YELLOW=''
+fi
 
 ########################################################################################################
 # PATH and args
 PATH=${PATH}:/usr/sbin:/usr/bin:/sbin:/bin
-ARGS="$@"
+
+# Capture raw args for note handling (supports flags and positional usage)
+RAW_ARGS=("$@")
 
 ########################################################################################################
 # Config
@@ -158,11 +171,38 @@ check_for_deps
 wait_for_internal_ip
 get_external_ip
 
-if [ -z "$ARGS" ]; then
-    note="Manual Update"
-else
-    note="$ARGS"
-fi
+# Parse arguments for note. Support:
+#   --reboot | --scheduled | -m|--note "message" | positional words
+parse_note() {
+    local note_flag="" pos=()
+    local i=0
+    while [ $i -lt ${#RAW_ARGS[@]} ]; do
+        arg="${RAW_ARGS[$i]}"
+        case "$arg" in
+            --reboot)
+                note_flag="REBOOT"; i=$((i+1));;
+            --scheduled)
+                note_flag="SCHEDULED"; i=$((i+1));;
+            -m|--note)
+                i=$((i+1));
+                note_flag="${RAW_ARGS[$i]:-}"; i=$((i+1));;
+            --)
+                i=$((i+1));
+                while [ $i -lt ${#RAW_ARGS[@]} ]; do pos+=("${RAW_ARGS[$i]}"); i=$((i+1)); done;;
+            *)
+                pos+=("$arg"); i=$((i+1));;
+        esac
+    done
+    if [ -n "$note_flag" ]; then
+        note="$note_flag"
+    elif [ ${#pos[@]} -gt 0 ]; then
+        note="${pos[*]}"
+    else
+        note="Manual Update"
+    fi
+}
+
+parse_note
 
 send_message_to_discord "$note"
 exit $?
