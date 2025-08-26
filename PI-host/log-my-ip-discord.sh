@@ -128,14 +128,6 @@ get_uptime_pretty() {
     fi
 }
 
-get_last_boot_time() {
-    if command -v who >/dev/null 2>&1; then
-        last_boot="$(who -b 2>/dev/null | awk '{print $3" "$4}' | head -n1)"
-        [ -z "$last_boot" ] && last_boot="Unknown"
-    else
-        last_boot="Unknown"
-    fi
-}
 
 send_message_to_discord() {
     if [ -z "${DISCORD_WEBHOOK_URL}" ]; then
@@ -152,11 +144,10 @@ send_message_to_discord() {
     esc_intip=$(json_escape "$intip")
     esc_extip=$(json_escape "$extip")
     # Extra fields
-    local esc_os esc_kernel esc_uptime esc_lboot
+    local esc_os esc_kernel esc_uptime
     esc_os=$(json_escape "${os_name:-}")
     esc_kernel=$(json_escape "${kernel_ver:-}")
     esc_uptime=$(json_escape "${uptime_pretty:-}")
-    esc_lboot=$(json_escape "${last_boot:-}")
 
     local tmpfile
     tmpfile=$(mktemp /tmp/discord.XXXXXXX)
@@ -182,8 +173,7 @@ send_message_to_discord() {
             {"name":"External IP","value":"${esc_extip}","inline":true},
             {"name":"OS","value":"${esc_os}","inline":true},
             {"name":"Kernel","value":"${esc_kernel}","inline":true},
-            {"name":"Uptime","value":"${esc_uptime}","inline":true},
-                {"name":"Last Boot","value":"${esc_lboot}","inline":true}
+                    {"name":"Uptime","value":"${esc_uptime}","inline":true}
         ]
    }
  ]
@@ -218,7 +208,6 @@ get_external_ip
 get_os_info
 get_kernel_info
 get_uptime_pretty
-get_last_boot_time
 
 # Parse arguments for note. Support:
 #   --reboot | --scheduled | -m|--note "message" | positional words
