@@ -1,0 +1,7 @@
+# This file should be placed in: /etc/cron.d/
+## Rename to remove the .CRONTAB (optional; it works with the current name)
+
+# Run at reboot
+@reboot root /root/pi-ip-logging/PI-host/log-my-ip-discord.sh REBOOT
+# Run at a set time each day
+0 0 * * * root /root/pi-ip-logging/PI-host/log-my-ip-discord.sh SCHEDULED

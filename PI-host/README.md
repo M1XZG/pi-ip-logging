@@ -53,6 +53,29 @@ The `log-my-ip.sh` script requires no arguements, but whatever you supply will b
 This is a run of the script where changes to the repo were found, these are pulled down and the script is run again with the updated version. The `log-my-ip.sh` ins't updated in this run, but other files where, so these are brought down. To have ONLY the script update it would need to be in it's own repo or even a branch of it's own.
 
 ```
+## Using Discord instead of Telegram
+
+If you prefer Discord notifications, use `log-my-ip-discord.sh` which posts to a Discord channel via an Incoming web hook.
+
+Setup steps:
+
+1) Create a Discord Incoming web hook for your target channel and copy its URL.
+2) Edit or create `/usr/local/etc/log-my-ip.ini` and set:
+
+   - `DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/…"`
+   - Optionally `DISCORD_USERNAME` and `DISCORD_AVATAR_URL`.
+
+3) Make the script executable and install the CRON file:
+
+   - `chmod +x /root/pi-ip-logging/PI-host/log-my-ip-discord.sh`
+   - `cp /root/pi-ip-logging/PI-host/log-my-ip-discord.CRONTAB /etc/cron.d/log-my-ip-discord`
+   - `chmod 644 /etc/cron.d/log-my-ip-discord`
+   - `chown root.root /etc/cron.d/log-my-ip-discord`
+
+4) Adjust paths in `/etc/cron.d/log-my-ip-discord` if your clone location differs from `/root/pi-ip-logging`.
+
+The Discord message contains: System Update note, Date, Hostname, Internal IP, and External IP.
+
 root@tinkerbell:~/pi-ip-logging/PI-host# ./log-my-ip.sh "A message 4 U"
 remote: Enumerating objects: 21, done.
 remote: Counting objects: 100% (21/21), done.

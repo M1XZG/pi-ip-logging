@@ -8,7 +8,9 @@ If you intend to use this, please be sure to fork this to your account. I may ma
 
 ## What?
 
-There are two parts to this project. The main part is the script `PI-host/log-my-ip.sh`, this will send messages to you on telegram and/or connect to the simple php script `Simple-Serverside/log-ips.php` and dump some basic info in CSV format. 
+There are two parts to this project. The main part is the script `PI-host/log-my-ip.sh`, this will send messages to you on Telegram and/or connect to the simple php script `Simple-Serverside/log-ips.php` and dump some basic info in CSV format.
+
+New: If you prefer Discord, use `PI-host/log-my-ip-discord.sh` which posts to a Discord channel via web hook.
 
 ## Why?
 
