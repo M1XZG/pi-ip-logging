@@ -164,8 +164,41 @@ check_for_deps()
 			echo
 		fi
 		exit 1
+	fi
+}
+
+# Resolve external/public IPv4 address using multiple strategies (DNS + HTTPS fallbacks)
+get_external_ip()
+{
+	local cand=""
+	# Try DNS methods first, if dig is available
+	if command -v dig >/dev/null 2>&1; then
+		cand="$(dig +short -4 TXT o-o.myaddr.l.google.com @ns1.google.com 2>/dev/null | tr -d '"' | head -n1)"
+		if ! printf '%s' "$cand" | grep -Eq '^[0-9]{1,3}(\.[0-9]{1,3}){3}$'; then
+			cand="$(dig +short myip.opendns.com @resolver1.opendns.com 2>/dev/null | head -n1)"
+		fi
+	fi
+
+	# If DNS didn't work, try HTTPS-based services with curl
+	if ! printf '%s' "$cand" | grep -Eq '^[0-9]{1,3}(\.[0-9]{1,3}){3}$'; then
+		for url in \
+			https://api.ipify.org \
+			https://ifconfig.me/ip \
+			https://icanhazip.com \
+			https://checkip.amazonaws.com \
+			https://ipinfo.io/ip
+		do
+			cand="$(curl -4 -fsS --max-time 3 --connect-timeout 2 "$url" 2>/dev/null | tr -d '\n\r\t ' | head -c 64)"
+			if printf '%s' "$cand" | grep -Eq '^[0-9]{1,3}(\.[0-9]{1,3}){3}$'; then
+				break
+			fi
+		done
+	fi
+
+	if printf '%s' "$cand" | grep -Eq '^[0-9]{1,3}(\.[0-9]{1,3}){3}$'; then
+		extip="$cand"
 	else
-		extip="$(dig +short myip.opendns.com @resolver1.opendns.com)"
+		extip="Unknown"
 	fi
 }
 
