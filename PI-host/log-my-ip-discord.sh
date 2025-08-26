@@ -104,6 +104,70 @@ json_escape() {
     echo -n "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\\"/g' | tr '\n' '\\n'
 }
 
+# Additional system info helpers
+get_os_info() {
+    if command -v lsb_release >/dev/null 2>&1; then
+        os_name="$(lsb_release -ds 2>/dev/null | sed 's/"//g')"
+    elif [ -f /etc/os-release ]; then
+        os_name="$(. /etc/os-release; echo "$PRETTY_NAME")"
+    else
+        os_name="Unknown"
+    fi
+}
+
+get_kernel_info() {
+    kernel_ver="$(uname -r 2>/dev/null || echo Unknown)"
+}
+
+get_uptime_pretty() {
+    if command -v uptime >/dev/null 2>&1; then
+        uptime_pretty="$(uptime -p 2>/dev/null || true)"
+        [ -z "$uptime_pretty" ] && uptime_pretty="Unknown"
+    else
+        uptime_pretty="Unknown"
+    fi
+}
+
+get_last_boot_time() {
+    if command -v who >/dev/null 2>&1; then
+        last_boot="$(who -b 2>/dev/null | awk '{print $3" "$4}' | head -n1)"
+        [ -z "$last_boot" ] && last_boot="Unknown"
+    else
+        last_boot="Unknown"
+    fi
+}
+
+# State handling for last recorded reboot
+resolve_state_file() {
+    local candidate
+    if [ -n "${LAST_REBOOT_FILE:-}" ]; then
+        candidate="$LAST_REBOOT_FILE"
+    else
+        local base_dir
+        base_dir="${STATE_DIR:-/var/lib/log-my-ip}"
+        candidate="$base_dir/last_reboot.txt"
+    fi
+    local dir
+    dir="$(dirname "$candidate")"
+    if mkdir -p "$dir" 2>/dev/null; then
+        state_file="$candidate"
+    else
+        mkdir -p /tmp/log-my-ip 2>/dev/null || true
+        state_file="/tmp/log-my-ip/last_reboot.txt"
+    fi
+}
+
+read_last_reboot_recorded() {
+    last_reboot_recorded="Unknown"
+    [ -f "$state_file" ] && last_reboot_recorded="$(cat "$state_file" 2>/dev/null)"
+}
+
+write_last_reboot_recorded_if_needed() {
+    if [ "${note^^}" = "REBOOT" ]; then
+        date -u +"%Y-%m-%dT%H:%M:%SZ" > "$state_file" 2>/dev/null || true
+    fi
+}
+
 send_message_to_discord() {
     if [ -z "${DISCORD_WEBHOOK_URL}" ]; then
         echo -e "${_YELLOW}DISCORD_WEBHOOK_URL not set. Skipping Discord notification.${_RESTORE}"
@@ -118,12 +182,19 @@ send_message_to_discord() {
     esc_hostname=$(json_escape "$hostname")
     esc_intip=$(json_escape "$intip")
     esc_extip=$(json_escape "$extip")
+    # Extra fields
+    local esc_os esc_kernel esc_uptime esc_lboot esc_lreboot
+    esc_os=$(json_escape "${os_name:-}")
+    esc_kernel=$(json_escape "${kernel_ver:-}")
+    esc_uptime=$(json_escape "${uptime_pretty:-}")
+    esc_lboot=$(json_escape "${last_boot:-}")
+    esc_lreboot=$(json_escape "${last_reboot_recorded:-}")
 
     local tmpfile
     tmpfile=$(mktemp /tmp/discord.XXXXXXX)
 
     # Use embeds by default; allow opt-out via DISCORD_USE_EMBEDS=NO
-    if [ "${DISCORD_USE_EMBEDS^^}" != "NO" ]; then
+        if [ "${DISCORD_USE_EMBEDS^^}" != "NO" ]; then
         local color iso
         color=${DISCORD_EMBED_COLOR:-3066993}
         iso=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
@@ -131,15 +202,22 @@ send_message_to_discord() {
 {"username":"${esc_username}",
  "avatar_url":"${esc_avatar}",
  "embeds":[
-   {"title":"System Update",
-    "description":"${esc_note}",
+     {"title":"System Update",
+        "description":"${esc_note}",
     "color":${color},
     "timestamp":"${iso}",
-    "fields":[
-      {"name":"Hostname","value":"${esc_hostname}","inline":true},
-      {"name":"Internal IP","value":"${esc_intip}","inline":true},
-      {"name":"External IP","value":"${esc_extip}","inline":true}
-    ]
+        "author": {"name": "${esc_hostname}"},
+        "footer": {"text": "log-my-ip • Discord"},
+        "fields":[
+            {"name":"Hostname","value":"${esc_hostname}","inline":true},
+            {"name":"Internal IP","value":"${esc_intip}","inline":true},
+            {"name":"External IP","value":"${esc_extip}","inline":true},
+            {"name":"OS","value":"${esc_os}","inline":true},
+            {"name":"Kernel","value":"${esc_kernel}","inline":true},
+            {"name":"Uptime","value":"${esc_uptime}","inline":true},
+            {"name":"Last Boot","value":"${esc_lboot}","inline":true},
+            {"name":"Last Reboot Recorded","value":"${esc_lreboot}","inline":true}
+        ]
    }
  ]
 }
@@ -170,6 +248,12 @@ EOF
 check_for_deps
 wait_for_internal_ip
 get_external_ip
+get_os_info
+get_kernel_info
+get_uptime_pretty
+get_last_boot_time
+resolve_state_file
+read_last_reboot_recorded
 
 # Parse arguments for note. Support:
 #   --reboot | --scheduled | -m|--note "message" | positional words
@@ -205,4 +289,5 @@ parse_note() {
 parse_note
 
 send_message_to_discord "$note"
+write_last_reboot_recorded_if_needed
 exit $?
