@@ -261,31 +261,50 @@ send_message_to_discord() {
     local tmpfile
     tmpfile=$(mktemp /tmp/discord.XXXXXXX)
 
-    # Use embeds by default; allow opt-out via DISCORD_USE_EMBEDS=NO
+        # Use embeds by default; allow opt-out via DISCORD_USE_EMBEDS=NO
         if [ "${DISCORD_USE_EMBEDS^^}" != "NO" ]; then
-        local color iso
-        color=${DISCORD_EMBED_COLOR:-3066993}
-        iso=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-        cat >"$tmpfile" <<EOF
+                local color iso
+                color=${DISCORD_EMBED_COLOR:-3066993}
+                iso=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+                cat >"$tmpfile" <<EOF
 {"username":"${esc_username}",
  "avatar_url":"${esc_avatar}",
  "embeds":[
      {"title":"System Update",
         "description":"${esc_note}",
-    "color":${color},
-    "timestamp":"${iso}",
+        "color":${color},
+        "timestamp":"${iso}",
         "author": {"name": "${esc_hostname}"},
         "footer": {"text": "log-my-ip • Discord"},
-            "fields":[
+        "fields":[
             {"name":"Hostname","value":"${esc_hostname}","inline":true},
             {"name":"Internal IP","value":"${esc_intip}","inline":true},
             {"name":"External IP","value":"${esc_extip}","inline":true},
             {"name":"OS","value":"${esc_os}","inline":true},
             {"name":"Kernel","value":"${esc_kernel}","inline":true},
-                    {"name":"Uptime","value":"${esc_uptime}","inline":true}
+            {"name":"Uptime","value":"${esc_uptime}","inline":true}
         ]
-   }
+     }
  ]
+}
+EOF
+    else
+        # Plain content fallback
+        local content esc_content
+        content=$(printf '**System Update**: %s\n**Date**: %s\n**Hostname**: %s\n**Internal IP**: %s\n**External IP**: %s' \
+            "$note" "$mydate" "$hostname" "$intip" "$extip")
+        esc_content=$(json_escape "$content")
+        cat >"$tmpfile" <<EOF
+{"username":"${esc_username}","avatar_url":"${esc_avatar}","content":"${esc_content}"}
+EOF
+    fi
+
+    # Send
+    curl -sS -H 'Content-Type: application/json' \
+        -X POST -d @"${tmpfile}" "${DISCORD_WEBHOOK_URL}" >/dev/null 2>&1
+    local rc=$?
+    rm -f "$tmpfile"
+    return $rc
 }
 
 # Send a concise Discord notification that a self-update has occurred
@@ -320,25 +339,6 @@ notify_discord_update() {
 EOF
         curl -sS -H 'Content-Type: application/json' -X POST -d @"${tmpfile}" "${DISCORD_WEBHOOK_URL}" >/dev/null 2>&1 || true
         rm -f "$tmpfile"
-}
-EOF
-    else
-        # Plain content fallback
-        local content esc_content
-        content=$(printf '**System Update**: %s\n**Date**: %s\n**Hostname**: %s\n**Internal IP**: %s\n**External IP**: %s' \
-            "$note" "$mydate" "$hostname" "$intip" "$extip")
-        esc_content=$(json_escape "$content")
-        cat >"$tmpfile" <<EOF
-{"username":"${esc_username}","avatar_url":"${esc_avatar}","content":"${esc_content}"}
-EOF
-    fi
-
-    # Send
-    curl -sS -H 'Content-Type: application/json' \
-        -X POST -d @"${tmpfile}" "${DISCORD_WEBHOOK_URL}" >/dev/null 2>&1
-    local rc=$?
-    rm -f "$tmpfile"
-    return $rc
 }
 
 ########################################################################################################
