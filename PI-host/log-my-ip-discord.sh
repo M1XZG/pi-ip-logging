@@ -20,23 +20,15 @@
 # set -o pipefail
 
 ########################################################################################################
-# Colours
-_RESTORE='\\033[0m'
+# Plain output (no ANSI colors)
+_RESTORE=''
 _BOLD=''
-_RED='\\033[00;31m'
-_GREEN='\\033[00;32m'
-_YELLOW='\\033[00;33m'
+_RED=''
+_GREEN=''
+_YELLOW=''
 
 ########################################################################################################
-# Disable colors and tput in non-interactive environments (e.g., cron)
-if [ -n "${TERM:-}" ] && [ "$TERM" != "dumb" ] && [ -t 1 ] && command -v tput >/dev/null 2>&1; then
-    _BOLD=$(tput bold 2>/dev/null || printf '')
-else
-    _RESTORE=''
-    _RED=''
-    _GREEN=''
-    _YELLOW=''
-fi
+# Always keep output plain, regardless of TTY/cron
 
 ########################################################################################################
 # PATH and args
@@ -75,7 +67,7 @@ mydate="$(date)"
 enable_self_update_ini() {
     local ini="/usr/local/etc/log-my-ip.ini"
     if [ "$(id -u)" != "0" ]; then
-        echo -e "${_RED}Must be root to modify ${ini}${_RESTORE}"
+    echo "Must be root to modify ${ini}"
         return 1
     fi
     if [ ! -f "$ini" ]; then
@@ -97,7 +89,7 @@ enable_self_update_ini() {
             echo 'GIT_BRANCH="main"' >> "$ini"
         fi
     fi
-    echo -e "${_GREEN}Enabled self-update in ${ini}${_RESTORE}"
+    echo "Enabled self-update in ${ini}"
 }
 
 check_for_deps() {
@@ -106,10 +98,10 @@ check_for_deps() {
     which curl &>/dev/null; _HAVE_CURL=$?
 
     if [ ${_HAVE_DIG} -ne 0 ] || [ ${_HAVE_LSB} -ne 0 ] || [ ${_HAVE_CURL} -ne 0 ]; then
-        echo -e "${_RED}Missing dependencies detected.${_RESTORE}"
-        [ ${_HAVE_DIG} -ne 0 ] && echo -e " - Install ${_GREEN}dnsutils${_RESTORE} (DEB) or ${_GREEN}bind-utils${_RESTORE} (RPM) for 'dig'"
-        [ ${_HAVE_LSB} -ne 0 ] && echo -e " - Install ${_GREEN}redhat-lsb-core${_RESTORE} for 'lsb_release' on RHEL/CentOS"
-        [ ${_HAVE_CURL} -ne 0 ] && echo -e " - Install ${_GREEN}curl${_RESTORE}"
+        echo "Missing dependencies detected."
+        [ ${_HAVE_DIG} -ne 0 ] && echo " - Install dnsutils (DEB) or bind-utils (RPM) for 'dig'"
+        [ ${_HAVE_LSB} -ne 0 ] && echo " - Install redhat-lsb-core for 'lsb_release' on RHEL/CentOS"
+        [ ${_HAVE_CURL} -ne 0 ] && echo " - Install curl"
         exit 1
     fi
 }
@@ -241,7 +233,7 @@ get_uptime_pretty() {
 send_message_to_discord() {
     if [ -z "${DISCORD_WEBHOOK_URL}" ]; then
         {
-            echo -e "${_RED}Error:${_RESTORE} DISCORD_WEBHOOK_URL is not configured."
+            echo "Error: DISCORD_WEBHOOK_URL is not configured."
             echo "Set it in /usr/local/etc/log-my-ip.ini, for example:"
             echo "  DISCORD_WEBHOOK_URL=\"https://discord.com/api/webhooks/<id>/<token>\""
             echo "Alternatively, export DISCORD_WEBHOOK_URL in the environment for this job."
