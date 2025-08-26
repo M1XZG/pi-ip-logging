@@ -245,9 +245,6 @@ add_key_if_missing "DISCORD_AVATAR_URL" '""' "# Optional: avatar URL for the mes
 add_key_if_missing "DISCORD_EMBED_COLOR" "3066993" "# Optional: embed color integer (RGB decimal)"
 add_key_if_missing "DISCORD_USE_EMBEDS" "YES" "# Use rich embeds (YES/NO)"
 
-# Add state-related keys if missing
-add_key_if_missing "STATE_DIR" '"/var/lib/log-my-ip"' "# Base directory for writable state (used to track last reboot)"
-add_key_if_missing "LAST_REBOOT_FILE" '""' "# Optional explicit file for last reboot timestamp (overrides STATE_DIR)"
 
 if [ "$DRY_RUN" -eq 1 ]; then
   info "Dry run complete for: $INI_PATH"
