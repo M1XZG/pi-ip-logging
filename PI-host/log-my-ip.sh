@@ -37,46 +37,14 @@ _WHITE='\033[01;37m'
 if [ -n "${TERM:-}" ] && [ "$TERM" != "dumb" ] && [ -t 1 ] && command -v tput >/dev/null 2>&1; then
 	_BOLD=$(tput bold 2>/dev/null || printf '')
 else
-	_RESTORE=''
-	# Safer self-update similar to Discord script
-
-	[ "$UPDATE_GUARD" ] && return
-	export UPDATE_GUARD=YES
-
-	_SCRIPT=$(readlink -f "$0")
-	_SCRIPTPATH=$(dirname "$_SCRIPT")
-	_SCRIPTNAME="$0"
-
-	(
-		cd "$_SCRIPTPATH" || exit 0
-		command -v git >/dev/null 2>&1 || exit 0
-		git fetch --all --quiet || exit 0
-		local _BRANCH
-		_BRANCH=${GIT_BRANCH:-main}
-		git show-ref --verify --quiet "refs/remotes/origin/${_BRANCH}" || exit 0
-		local local_before remote_target local_after
-		local_before=$(git rev-parse --verify HEAD 2>/dev/null) || exit 0
-		remote_target=$(git rev-parse --verify "origin/${_BRANCH}" 2>/dev/null) || exit 0
-		if [ "$local_before" != "$remote_target" ]; then
-			echo "Found a new version of me, updating myself..."
-			git checkout -q "${_BRANCH}" || true
-			git pull --force -q || true
-			local_after=$(git rev-parse --verify HEAD 2>/dev/null) || local_after="unknown"
-			# Optionally send a Telegram notice about the update
-			if [ -n "${TGTOKEN:-}" ] && [ -n "${TGGRPID:-}" ]; then
-				__old_note="${note:-}"
-				old_short=$(printf '%s' "$local_before" | cut -c1-7)
-				new_short=$(printf '%s' "$local_after" | cut -c1-7)
-				note="Self-update applied on ${hostname} (branch ${_BRANCH}): ${old_short} -> ${new_short}"
-				send_message_to_telegram || true
-				note="${__old_note}"
-			fi
-			echo "Running the new version..."
-			exec "$_SCRIPTNAME" "${ARGS}"
-			exit 0
-		fi
-	)
-	echo "Already the latest version."
+    _RESTORE=''
+    _RED=''
+    _GREEN=''
+    _YELLOW=''
+    _BLUE=''
+    _PURPLE=''
+    _WHITE=''
+fi
 if [ -f /usr/local/etc/log-my-ip.ini ]; then
 	source /usr/local/etc/log-my-ip.ini
 else
@@ -276,34 +244,44 @@ send_message_to_server()
 
 self_update() 
 {
-	# Taken from https://stackoverflow.com/questions/59727780/self-updating-bash-script-from-github
-
-    [ "$UPDATE_GUARD" ] && return
-    export UPDATE_GUARD=YES
+	# Safer self-update similar to Discord script
+	[ "$UPDATE_GUARD" ] && return
+	export UPDATE_GUARD=YES
 
 	_SCRIPT=$(readlink -f "$0")
 	_SCRIPTPATH=$(dirname "$_SCRIPT")
 	_SCRIPTNAME="$0"
-	#ARGS="$@"
 
-    cd $_SCRIPTPATH
-    git fetch
-
-	git diff --name-only origin/$GIT_BRANCH | grep $_SCRIPTNAME &> /dev/null
-	_HAS_UPDATE=$?
-
-    [ ${_HAVE_DIG} = 1 ] && {
-        echo "Found a new version of me, updating myself..."
-        git pull --force
-        git checkout $GIT_BRANCH
-        git pull --force
-        echo "Running the new version..."
-        exec "$_SCRIPTNAME" "${ARGS}"
-
-        # Now exit this old instance
-        exit 1
-    }
-    echo "Already the latest version."
+	(
+		cd "$_SCRIPTPATH" || exit 0
+		command -v git >/dev/null 2>&1 || exit 0
+		git fetch --all --quiet || exit 0
+		local _BRANCH
+		_BRANCH=${GIT_BRANCH:-main}
+		git show-ref --verify --quiet "refs/remotes/origin/${_BRANCH}" || exit 0
+		local local_before remote_target local_after
+		local_before=$(git rev-parse --verify HEAD 2>/dev/null) || exit 0
+		remote_target=$(git rev-parse --verify "origin/${_BRANCH}" 2>/dev/null) || exit 0
+		if [ "$local_before" != "$remote_target" ]; then
+			echo "Found a new version of me, updating myself..."
+			git checkout -q "${_BRANCH}" || true
+			git pull --force -q || true
+			local_after=$(git rev-parse --verify HEAD 2>/dev/null) || local_after="unknown"
+			# Optionally send a Telegram notice about the update
+			if [ -n "${TGTOKEN:-}" ] && [ -n "${TGGRPID:-}" ]; then
+				__old_note="${note:-}"
+				old_short=$(printf '%s' "$local_before" | cut -c1-7)
+				new_short=$(printf '%s' "$local_after" | cut -c1-7)
+				note="Self-update applied on ${hostname} (branch ${_BRANCH}): ${old_short} -> ${new_short}"
+				send_message_to_telegram || true
+				note="${__old_note}"
+			fi
+			echo "Running the new version..."
+			exec "$_SCRIPTNAME" "${ARGS}"
+			exit 0
+		fi
+	)
+	echo "Already the latest version."
 }
 
 ########################################################################################################
