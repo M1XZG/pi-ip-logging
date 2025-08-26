@@ -132,13 +132,18 @@ self_update() {
         git fetch --all --quiet || exit 0
         # If remote branch isn't found, skip
         git show-ref --verify --quiet "refs/remotes/origin/${_BRANCH}" || exit 0
-        local local_ref remote_ref
-        local_ref=$(git rev-parse --verify HEAD 2>/dev/null) || exit 0
-        remote_ref=$(git rev-parse --verify "origin/${_BRANCH}" 2>/dev/null) || exit 0
-        if [ "$local_ref" != "$remote_ref" ]; then
+        local local_before remote_target local_after
+        local_before=$(git rev-parse --verify HEAD 2>/dev/null) || exit 0
+        remote_target=$(git rev-parse --verify "origin/${_BRANCH}" 2>/dev/null) || exit 0
+        if [ "$local_before" != "$remote_target" ]; then
             echo "Found a new version of me, updating myself..."
             git checkout -q "${_BRANCH}" || true
             git pull --force -q || true
+            local_after=$(git rev-parse --verify HEAD 2>/dev/null) || local_after="unknown"
+            # Send a Discord notice about the update (hostname, branch, from -> to)
+            if [ -n "${DISCORD_WEBHOOK_URL:-}" ]; then
+                notify_discord_update "$local_before" "$local_after" "${_BRANCH}"
+            fi
             echo "Running the new version..."
             exec "$_SCRIPTNAME" "${RAW_ARGS[@]}"
             exit 0
@@ -281,6 +286,40 @@ send_message_to_discord() {
         ]
    }
  ]
+}
+
+# Send a concise Discord notification that a self-update has occurred
+notify_discord_update() {
+        # Args: old_ref new_ref branch
+        local old_ref="$1" new_ref="$2" branch="$3"
+        [ -z "${DISCORD_WEBHOOK_URL}" ] && return 0
+
+        # Shorten refs
+        local old_short new_short esc_hostname esc_branch iso tmpfile
+        old_short=$(printf '%s' "$old_ref" | cut -c1-7)
+        new_short=$(printf '%s' "$new_ref" | cut -c1-7)
+        esc_hostname=$(json_escape "${hostname}")
+        esc_branch=$(json_escape "${branch}")
+        iso=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+        tmpfile=$(mktemp /tmp/discord.XXXXXXX)
+        cat >"$tmpfile" <<EOF
+{"username":"$(json_escape "${DISCORD_USERNAME:-Pi IP Logger}")",
+ "avatar_url":"$(json_escape "${DISCORD_AVATAR_URL}")",
+ "embeds":[
+     {"title":"Self-update applied",
+         "description":"Updated on ${esc_hostname}",
+         "color":3447003,
+         "timestamp":"${iso}",
+         "fields":[
+             {"name":"Branch","value":"${esc_branch}","inline":true},
+             {"name":"Version","value":"${old_short} → ${new_short}","inline":true}
+         ]
+     }
+ ]
+}
+EOF
+        curl -sS -H 'Content-Type: application/json' -X POST -d @"${tmpfile}" "${DISCORD_WEBHOOK_URL}" >/dev/null 2>&1 || true
+        rm -f "$tmpfile"
 }
 EOF
     else
