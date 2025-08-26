@@ -104,12 +104,28 @@ WGETOPTS=" -q --no-check-certificate -O /dev/null"
 hostname="$(hostname)"
 
 intip=""
-intipres="$(echo ${intip} | grep -q ${_my_network_range} || echo $?)"
-
-while [ "$intipres" = "1" ]
-do
-	intip="$(hostname -I|awk '{print $1}')"
-	intipres="$(echo ${intip} | grep -q ${_my_network_range} || echo $?)"
+# Avoid infinite loop waiting for a specific LAN range when running outside home network.
+# Behavior:
+# - If _my_network_range is empty or "ANY", accept any non-empty IP and continue.
+# - Otherwise, wait up to NETWORK_WAIT_MAX_ATTEMPTS (default 24) for a matching IP; then continue with whatever IP is available.
+attempt=0
+max_attempts=${NETWORK_WAIT_MAX_ATTEMPTS:-24} # 24 * 5s = 2 minutes
+require_match=1
+if [ -z "${_my_network_range:-}" ] || [ "${_my_network_range^^}" = "ANY" ]; then
+	require_match=0
+fi
+while :; do
+	intip="$(hostname -I | awk '{print $1}')"
+	if [ -n "$intip" ]; then
+		if [ $require_match -eq 0 ] || echo "$intip" | grep -q "${_my_network_range}"; then
+			break
+		fi
+	fi
+	attempt=$((attempt+1))
+	if [ $attempt -ge $max_attempts ]; then
+		# Timed out waiting for a match; continue with the current IP (may be public) or empty if none.
+		break
+	fi
 	sleep 5
 done
 

@@ -85,12 +85,27 @@ check_for_deps() {
 }
 
 wait_for_internal_ip() {
-    local intipres="1"
-    while [ "$intipres" = "1" ]; do
+    # Avoid infinite loop when not on the configured LAN. If _my_network_range is empty or ANY,
+    # accept any non-empty IP. Otherwise, wait up to NETWORK_WAIT_MAX_ATTEMPTS (default 24) for a match.
+    local attempt=0
+    local max_attempts=${NETWORK_WAIT_MAX_ATTEMPTS:-24} # 24 * 5s = 2 minutes
+    local require_match=1
+    if [ -z "${_my_network_range:-}" ] || [ "${_my_network_range^^}" = "ANY" ]; then
+        require_match=0
+    fi
+    while :; do
         intip="$(hostname -I | awk '{print $1}')"
-        echo "$intip" | grep -q "${_my_network_range}"
-        intipres=$?
-        [ "$intipres" = "1" ] && sleep 5
+        if [ -n "$intip" ]; then
+            if [ $require_match -eq 0 ] || echo "$intip" | grep -q "${_my_network_range}"; then
+                break
+            fi
+        fi
+        attempt=$((attempt+1))
+        if [ $attempt -ge $max_attempts ]; then
+            # Timed out waiting for a match; continue with the current IP (may be public) or empty if none.
+            break
+        fi
+        sleep 5
     done
 }
 
