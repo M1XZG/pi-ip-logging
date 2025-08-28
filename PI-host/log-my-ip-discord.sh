@@ -37,6 +37,14 @@ PATH=${PATH}:/usr/sbin:/usr/bin:/sbin:/bin
 # Capture raw args for note handling (supports flags and positional usage)
 RAW_ARGS=("$@")
 
+# Detect if this run is a REBOOT run (to skip auto-update before network is up)
+is_reboot_run=0
+for _a in "${RAW_ARGS[@]}"; do
+  case "$_a" in
+    --reboot|REBOOT) is_reboot_run=1; break;;
+  esac
+done
+
 ########################################################################################################
 # Config
 ########################################################################################################
@@ -113,12 +121,16 @@ self_update() {
 
     command -v git >/dev/null 2>&1 || return
 
+    # Network guard: skip updating if we can’t resolve github.com yet (e.g., at early boot)
+    if ! getent hosts github.com >/dev/null 2>&1; then
+        return
+    fi
+
     local _SCRIPT _SCRIPTPATH _SCRIPTNAME _BRANCH
     _SCRIPT=$(readlink -f "$0")
     _SCRIPTPATH=$(dirname "$_SCRIPT")
     _SCRIPTNAME="$0"
     _BRANCH=${GIT_BRANCH:-main}
-
     (
         cd "$_SCRIPTPATH" || exit 0
         git fetch --all --quiet || exit 0
@@ -342,6 +354,7 @@ EOF
 # Main
 ########################################################################################################
 
+# Handle flags that should exit early (e.g., --enable-self-update)
 check_for_deps
 for _a in "${RAW_ARGS[@]}"; do
     case "$_a" in
@@ -351,7 +364,9 @@ for _a in "${RAW_ARGS[@]}"; do
             ;;
     esac
 done
-if [ "${USE_SELFUPATE}" = "YES" ]; then
+
+# Only attempt self-update if not a REBOOT run
+if [ "${USE_SELFUPATE}" = "YES" ] && [ $is_reboot_run -eq 0 ]; then
     self_update
 fi
 wait_for_internal_ip
