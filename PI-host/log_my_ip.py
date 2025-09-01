@@ -298,10 +298,28 @@ def get_os_logo_url(cfg: dict, os_name: str) -> str:
     return ""
 
 def send_discord(cfg, note, hostname, intip, extip, os_name, kernel, uptime, dry_run=False):
-    url = cfg.get("DISCORD_WEBHOOK_URL", "")
+    url = (cfg.get("DISCORD_WEBHOOK_URL", "") or "").strip()
     if not url:
         print("Error: DISCORD_WEBHOOK_URL is not configured. Set it in /usr/local/etc/log-my-ip.ini", file=sys.stderr)
         return False
+    # Optional: if posting into a thread (e.g., Forum channel), Discord requires thread_id in query
+    thread_id = (cfg.get("DISCORD_THREAD_ID") or "").strip()
+    # Optional: add wait=true to get response data from Discord (can help with proxies/WAF)
+    add_wait = str(cfg.get("DISCORD_WAIT", "")).strip().upper() == "YES"
+    if thread_id or add_wait:
+        try:
+            parts = parse.urlparse(url)
+            q = dict(parse.parse_qsl(parts.query))
+            if thread_id:
+                q["thread_id"] = thread_id
+            if add_wait:
+                q["wait"] = "true"
+            url = parse.urlunparse(parts._replace(query=parse.urlencode(q)))
+        except Exception:
+            if thread_id:
+                url += ("&" if ("?" in url) else "?") + f"thread_id={thread_id}"
+            if add_wait:
+                url += ("&" if ("?" in url) else "?") + "wait=true"
     use_embeds = str(cfg.get("DISCORD_USE_EMBEDS", "YES")).strip().upper() != "NO"
     username = cfg.get("DISCORD_USERNAME", "Pi IP Logger")
     avatar = cfg.get("DISCORD_AVATAR_URL", "")
@@ -342,7 +360,14 @@ def send_discord(cfg, note, hostname, intip, extip, os_name, kernel, uptime, dry
         print("[DRY RUN] Discord payload:", json.dumps(payload))
         return True
     try:
-        req = request.Request(url, data=data, headers={"Content-Type": "application/json"})
+        req = request.Request(
+            url,
+            data=data,
+            headers={
+                "Content-Type": "application/json",
+                "User-Agent": "pi-ip-logger/1.0 (+https://github.com/M1XZG/pi-ip-logging)",
+            },
+        )
         with request.urlopen(req, timeout=5) as _:
             pass
         return True
@@ -356,6 +381,27 @@ def send_discord(cfg, note, hostname, intip, extip, os_name, kernel, uptime, dry
             print(f"Discord send failed: {e} — {body}", file=sys.stderr)
         else:
             print(f"Discord send failed: {e}", file=sys.stderr)
+        # Fallback: retry with a minimal content-only message if embeds were used
+        if use_embeds and not dry_run and e.code in (400, 401, 403):
+            try:
+                fallback_content = (
+                    f"System Update: {note}\n"
+                    f"Hostname: {hostname}\nInternal IP: {intip}\nExternal IP: {extip}\n"
+                )
+                fallback_payload = {"username": username, "avatar_url": avatar, "content": fallback_content}
+                req2 = request.Request(
+                    url,
+                    data=json.dumps(fallback_payload).encode(),
+                    headers={
+                        "Content-Type": "application/json",
+                        "User-Agent": "pi-ip-logger/1.0 (+https://github.com/M1XZG/pi-ip-logging)",
+                    },
+                )
+                with request.urlopen(req2, timeout=5) as _:
+                    pass
+                return True
+            except Exception as e2:
+                print(f"Discord fallback (content-only) failed: {e2}", file=sys.stderr)
         return False
     except Exception as e:
         print(f"Discord send failed: {e}", file=sys.stderr)
