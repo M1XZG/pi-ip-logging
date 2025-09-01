@@ -72,6 +72,29 @@ Discord extras:
 - `DISCORD_WAIT=YES` (optional): Adds `wait=true` to the webhook call so Discord returns a response; useful behind proxies/WAFs.
 - On HTTP 400/401/403 errors with embeds, the script automatically retries with a content-only message. It also prints the HTTP error body to help troubleshoot issues like “Unknown Webhook” (invalid/rotated URL) or permission problems.
 
+### Keep your INI up to date (auto‑patch)
+
+To keep your `log-my-ip.ini` current when new options are introduced, use the helper script `PI-host/update_log_my_ip_ini.py`.
+
+What it does:
+- Preserves all existing values exactly; only appends any missing keys.
+- Adds safe defaults where applicable and commented placeholders for optional keys.
+- Writes a timestamped backup next to your file before saving.
+
+Usage examples:
+
+```sh
+# Preview what would be added, without writing
+python3 PI-host/update_log_my_ip_ini.py --ini /usr/local/etc/log-my-ip.ini --dry-run
+
+# Apply changes (creates a .bak-YYYYmmddHHMMSS backup)
+python3 PI-host/update_log_my_ip_ini.py --ini /usr/local/etc/log-my-ip.ini
+```
+
+Notes:
+- You can run this anytime after pulling updates. It’s idempotent and won’t duplicate keys.
+- Optional keys are appended as commented lines so they don’t change behavior until you opt in.
+
 #### Common OS logo codes
 
 Reference repository: https://github.com/M1XZG/operating-system-logos (see README “Preview List”)
