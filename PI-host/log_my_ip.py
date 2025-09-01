@@ -22,11 +22,12 @@ import subprocess
 import sys
 import time
 from datetime import datetime, timezone
+from typing import Optional
 from urllib import request, parse
 
 INI_PATH_DEFAULT = "/usr/local/etc/log-my-ip.ini"
 
-def resolve_ini_path(cli_path: str | None) -> str:
+def resolve_ini_path(cli_path: Optional[str]) -> str:
     """Resolve the INI path using CLI override or common locations.
     Order: /etc/log-my-ip.ini, $HOME/.log-my-ip.ini, /usr/local/etc/log-my-ip.ini.
     If none exist, return /usr/local/etc/log-my-ip.ini as the default target for writes.
