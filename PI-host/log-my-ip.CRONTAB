@@ -1,7 +1,7 @@
 # This file should be should be placed in:   /etc/cron.d/
 # Rename to remove the .CRONTAB (but it's not required, it'll work fine with the current name)
 
-# Run at reboot
-@reboot root /root/pi-ip-logging/PI-host/log-my-ip.sh REBOOT
+# Run at reboot (Python script)
+@reboot root /root/pi-ip-logging/PI-host/log_my_ip.py --reboot
 # Run at a set time each day
-0 0 * * * root /root/pi-ip-logging/PI-host/log-my-ip.sh SCHEDULED
+0 0 * * * root /root/pi-ip-logging/PI-host/log_my_ip.py --scheduled
