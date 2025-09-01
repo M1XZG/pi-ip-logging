@@ -8,9 +8,10 @@ If you intend to use this, please be sure to fork this to your account. I may ma
 
 ## What?
 
-There are two parts to this project. The main part is the script `PI-host/log-my-ip.sh`, this will send messages to you on Telegram and/or connect to the simple php script `Simple-Serverside/log-ips.php` and dump some basic info in CSV format.
+There are two implementations:
 
-New: If you prefer Discord, use `PI-host/log-my-ip-discord.sh` which posts to a Discord channel via web hook. See `PI-host/README.md` for setup.
+- Preferred: `PI-host/log_my_ip.py` (Python) — unified notifier for Discord and/or Telegram with richer features and easier config.
+- Legacy: `PI-host/log-my-ip.sh` and `PI-host/log-my-ip-discord.sh` (bash) — kept for compatibility.
 
 ## Why?
 
@@ -36,7 +37,9 @@ The script doesn't rely on too much, however you must have the following install
 
 ## PI-host/
 
-See the [README.md](PI-host/README.md) for more usage information.
+See the [PI-host/README.md](PI-host/README.md) for setup, cron examples, and configuration details (including OS logo code overrides for Discord embeds).
+
+OS logo codes reference: https://github.com/M1XZG/operating-system-logos (Preview List)
 
 ---
 
