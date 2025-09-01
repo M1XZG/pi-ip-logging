@@ -67,6 +67,11 @@ Unified notifier for Discord and/or Telegram.
 
 Discord logos: The script picks an OS icon by reading `/etc/os-release` and mapping ID/ID_LIKE to the official alpha-3 codes used by the logos repo. You can override via `DISCORD_OS_LOGO_CODE=UBT` etc. See the repo’s preview list for available codes.
 
+Discord extras:
+- `DISCORD_THREAD_ID` (optional): If your webhook targets a Forum/Thread channel, set the thread ID here so messages go into that thread.
+- `DISCORD_WAIT=YES` (optional): Adds `wait=true` to the webhook call so Discord returns a response; useful behind proxies/WAFs.
+- On HTTP 400/401/403 errors with embeds, the script automatically retries with a content-only message. It also prints the HTTP error body to help troubleshoot issues like “Unknown Webhook” (invalid/rotated URL) or permission problems.
+
 #### Common OS logo codes
 
 Reference repository: https://github.com/M1XZG/operating-system-logos (see README “Preview List”)
