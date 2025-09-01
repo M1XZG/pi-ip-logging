@@ -24,6 +24,7 @@ import time
 from datetime import datetime, timezone
 from typing import Optional
 from urllib import request, parse
+from urllib import error as urlerror
 
 INI_PATH_DEFAULT = "/usr/local/etc/log-my-ip.ini"
 
@@ -345,6 +346,17 @@ def send_discord(cfg, note, hostname, intip, extip, os_name, kernel, uptime, dry
         with request.urlopen(req, timeout=5) as _:
             pass
         return True
+    except urlerror.HTTPError as e:
+        body = None
+        try:
+            body = e.read().decode(errors="ignore")
+        except Exception:
+            body = None
+        if body:
+            print(f"Discord send failed: {e} — {body}", file=sys.stderr)
+        else:
+            print(f"Discord send failed: {e}", file=sys.stderr)
+        return False
     except Exception as e:
         print(f"Discord send failed: {e}", file=sys.stderr)
         return False
