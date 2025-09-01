@@ -49,6 +49,89 @@ def resolve_ini_path(cli_path: Optional[str]) -> str:
             continue
     return INI_PATH_DEFAULT
 
+def _parse_ini_simple_text(txt: str):
+    """Lightweight key=value reader for presence checks; ignores comments/blank lines."""
+    cfg = {}
+    if not txt:
+        return cfg
+    for raw in txt.splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        k, v = line.split("=", 1)
+        cfg[k.strip()] = v.strip()
+    return cfg
+
+def patch_ini(ini_path: str, dry_run: bool = False) -> int:
+    """Append any newly introduced keys to the user's INI file.
+
+    - Preserves existing values and lines; only appends missing keys with defaults/placeholders.
+    - Writes a timestamped backup before modifying the file (unless dry_run).
+    - Returns 0 on success, 2 on missing INI.
+    """
+    text = read_file(ini_path)
+    if text is None:
+        print(f"Error: INI not found: {ini_path}", file=sys.stderr)
+        return 2
+    existing = _parse_ini_simple_text(text)
+    # Canonical defaults; None means add as commented placeholder.
+    defaults = {
+        # Core
+        "USE_SELFUPATE": "NO",
+        "GIT_BRANCH": '"main"',
+        "_my_network_range": '"ANY"',
+        "NETWORK_WAIT_MAX_ATTEMPTS": None,  # default is 24 in code
+        # Telegram
+        "TGTOKEN": '""',
+        "TGCHATID": '""',
+        "TGGRPID": '""',
+        "ENABLE_TELEGRAM": None,
+        # Discord
+        "DISCORD_WEBHOOK_URL": '""',
+        "DISCORD_USERNAME": '"Pi IP Logger"',
+        "DISCORD_AVATAR_URL": '""',
+        "DISCORD_EMBED_COLOR": "3066993",
+        "DISCORD_USE_EMBEDS": "YES",
+        "DISCORD_OS_LOGO_CODE": None,
+        "DISCORD_THREAD_ID": None,
+        "DISCORD_WAIT": None,
+        "ENABLE_DISCORD": None,
+    }
+    missing_lines = []
+    for key, val in defaults.items():
+        if key in existing:
+            continue
+        if val is None:
+            missing_lines.append(f"#{key}=")
+        else:
+            missing_lines.append(f"{key}={val}")
+    if not missing_lines:
+        print("No changes needed — your INI already contains all known keys.")
+        return 0
+    banner = [
+        "",
+        f"## Added by log_my_ip.py --patch-ini on {datetime.now().isoformat(timespec='seconds')}",
+        "# The following keys were missing and have been appended.",
+        "# Note: commented entries are optional and safe to ignore.",
+    ]
+    new_text = text.rstrip("\n") + "\n" + "\n".join(banner + missing_lines) + "\n"
+    if dry_run:
+        print("--- BEGIN NEW CONTENT (preview) ---")
+        print("\n".join(missing_lines))
+        print("--- END NEW CONTENT (preview) ---")
+        return 0
+    # Backup and write
+    try:
+        import shutil as _shutil
+        backup_path = f"{ini_path}.bak-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        _shutil.copy2(ini_path, backup_path)
+        print(f"Backup written: {backup_path}")
+    except Exception as e:
+        print(f"Warning: failed to create backup: {e}")
+    write_file(ini_path, new_text)
+    print(f"Updated: {ini_path}")
+    return 0
+
 def which(cmd):
     return shutil.which(cmd) is not None
 
@@ -531,6 +614,10 @@ def parse_args():
     p.add_argument("-n", "--dry-run", action="store_true", help="Print what would be sent without sending")
     p.add_argument("--enable-self-update", dest="enable_self_update", action="store_true",
                    help="Write USE_SELFUPATE=YES and GIT_BRANCH=\"main\" to the INI and exit")
+    p.add_argument("--patch-ini", dest="patch_ini", action="store_true",
+                   help="Append any newly introduced keys to the INI and exit")
+    p.add_argument("--patch-ini-preview", dest="patch_ini_preview", action="store_true",
+                   help="Preview which keys would be added to the INI and exit")
     args, rest = p.parse_known_args()
     args.positional = rest
     args.original_argv = sys.argv[1:]
@@ -577,6 +664,10 @@ def main():
     ini_path = resolve_ini_path(args.ini)
     if args.enable_self_update:
         sys.exit(ensure_self_update_ini(ini_path))
+    if getattr(args, "patch_ini_preview", False):
+        sys.exit(patch_ini(ini_path, dry_run=True))
+    if getattr(args, "patch_ini", False):
+        sys.exit(patch_ini(ini_path, dry_run=False))
     cfg = parse_ini(ini_path)
     enable_discord, enable_telegram = ensure_ini_enable_flags(cfg)
     hostname = run(["hostname"]) or socket.gethostname()

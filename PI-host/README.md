@@ -62,6 +62,8 @@ Unified notifier for Discord and/or Telegram.
   - `--scheduled` sets note to SCHEDULED
   - `-m|--note "custom message"`
   - `--enable-self-update` writes `USE_SELFUPATE=YES` and `GIT_BRANCH="main"` to the INI and exits
+  - `--patch-ini` appends any newly introduced keys to your INI and exits (creates a timestamped .bak backup)
+  - `--patch-ini-preview` previews which keys would be added without writing
   - `--ini /path/to/log-my-ip.ini` to override search
   - `-n|--dry-run` to print without sending
 
@@ -81,7 +83,7 @@ What it does:
 - Adds safe defaults where applicable and commented placeholders for optional keys.
 - Writes a timestamped backup next to your file before saving.
 
-Usage examples:
+Usage examples (standalone helper):
 
 ```sh
 # Preview what would be added, without writing
@@ -89,6 +91,16 @@ python3 PI-host/update_log_my_ip_ini.py --ini /usr/local/etc/log-my-ip.ini --dry
 
 # Apply changes (creates a .bak-YYYYmmddHHMMSS backup)
 python3 PI-host/update_log_my_ip_ini.py --ini /usr/local/etc/log-my-ip.ini
+```
+
+Or use the main script directly:
+
+```sh
+# Preview additions using the active INI resolution
+python3 PI-host/log_my_ip.py --patch-ini-preview
+
+# Apply additions to the currently resolved INI
+python3 PI-host/log_my_ip.py --patch-ini
 ```
 
 Notes:
